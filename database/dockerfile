@@ -1,0 +1,4 @@
+ARG POSTGRES_VERSION
+FROM docker.io/postgres:${POSTGRES_VERSION}
+USER postgres
+COPY ./assets/create_records_table.sql /docker-entrypoint-initdb.d/init.sql
