@@ -16,6 +16,7 @@ repos:
     rev: 23.10.1
     hooks:
       - id: black
+  - repo: 
   - repo: local
     hooks:
       - id: mypy-producer
@@ -31,4 +32,64 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+        always_run: true
+      - id: poetry-check
+        name: poetry check producer
+        args: ["-C", "./producer"]
+      - id: poetry-lock
+        name: poetry lock producer
+        args: ["-C", "./producer"]
+      - id: poetry-export
+        name: poetry export producer dev dependencies
+        args: [
+          "-C",
+          "./producer",
+          "-f", "requirements.txt",
+          "-o",
+          "./producer/requirements-dev.txt",
+          "--without-hashes",
+          "--with",
+          "dev"
+        ]
+        always_run: true
+      - id: poetry-export
+        name: poetry export producer dependencies
+        args: [
+          "-C",
+          "./producer",
+          "-f", "requirements.txt",
+          "-o",
+          "./producer/requirements.txt",
+          "--without-hashes"
+        ]
+        always_run: true
+      - id: poetry-check
+        name: poetry check consumer
+        args: ["-C", "./consumer"]
+      - id: poetry-lock
+        name: poetry lock consumer
+        args: ["-C", "./consumer"]
+      - id: poetry-export
+        name: poetry export consumer dev dependencies
+        args: [
+          "-C",
+          "./consumer",
+          "-f", "requirements.txt",
+          "-o",
+          "./consumer/requirements-dev.txt",
+          "--without-hashes",
+          "--with",
+          "dev"
+        ]
+        always_run: true
+      - id: poetry-export
+        name: poetry export consumer dependencies
+        args: [
+          "-C",
+          "./consumer",
+          "-f", "requirements.txt",
+          "-o",
+          "./consumer/requirements.txt",
+          "--without-hashes"
+        ]
         always_run: true

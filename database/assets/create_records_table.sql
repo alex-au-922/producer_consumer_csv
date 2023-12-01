@@ -6,4 +6,4 @@ CREATE TABLE IF NOT EXISTS records (
 );
 
 CREATE INDEX IF NOT EXISTS idx_records_record_time ON records USING BTREE (record_time);
-CREATE INDEX IF NOT EXISTS idx_records_record_time ON records USING HASH (sensor_id);
+CREATE INDEX IF NOT EXISTS idx_records_sensor_id ON records USING BTREE (sensor_id);
