@@ -39,6 +39,9 @@ jobs:
   test:
     needs: load-dotenv
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     services:
       rabbitmq:
         image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
