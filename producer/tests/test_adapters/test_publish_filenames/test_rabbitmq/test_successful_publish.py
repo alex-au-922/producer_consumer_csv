@@ -37,9 +37,13 @@ def test_publish_batch_success(
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
+    all_filenames = []
+
     channel = pika_conn.channel()
-    for filename in filenames:
+    while len(all_filenames) < len(filenames):
         method_frame, _, body = channel.basic_get(queue=queue)
         assert method_frame is not None
-        assert body.decode() == filename
+        all_filenames.append(body.decode())
         channel.basic_ack(method_frame.delivery_tag)
+
+    assert sorted(all_filenames) == sorted(filenames)

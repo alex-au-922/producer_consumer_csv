@@ -1,7 +1,6 @@
 from pytest import LogCaptureFixture
 from src.adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient
 from .utils import random_iot_records, MockedPostgresConnection
-import pytest
 
 
 def test_close_conn_failed(

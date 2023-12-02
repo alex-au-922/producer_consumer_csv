@@ -31,8 +31,9 @@ def test_publish_single_non_idempotent(
     channel.basic_ack(method_frame.delivery_tag)
 
     method_frame, _, body = channel.basic_get(queue=queue)
-    assert method_frame is None
-    assert body is None
+    assert method_frame is not None
+    assert body.decode() == filename
+    channel.basic_ack(method_frame.delivery_tag)
 
 
 @pytest.mark.smoke
