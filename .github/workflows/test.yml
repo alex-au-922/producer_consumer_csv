@@ -98,7 +98,6 @@ jobs:
           QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
       - name: Output coverage file
         id: output-coverage-file
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           echo "COVERAGE_FILE_CACHE_PATH=${{env.COVERAGE_FILE}}" >> $GITHUB_OUTPUT
           echo "COVERAGE_FILE_CACHE_KEY=${{ runner.os }}-coverage-producer-${{ hashFiles(env.WATCH_FILE_PATTERNS) }}" >> $GITHUB_OUTPUT
@@ -175,7 +174,6 @@ jobs:
           QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
       - name: Output coverage file
         id: output-coverage-file
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           echo "COVERAGE_FILE_CACHE_PATH=${{env.COVERAGE_FILE}}" >> $GITHUB_OUTPUT
           echo "COVERAGE_FILE_CACHE_KEY=${{ runner.os }}-coverage-consumer-${{ hashFiles(env.WATCH_FILE_PATTERNS) }}" >> $GITHUB_OUTPUT
