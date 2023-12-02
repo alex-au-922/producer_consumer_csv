@@ -4,7 +4,7 @@ from src.deployments.script.config import PostgresConfig
 from src.entities import IOTRecord
 import psycopg2
 from .utils import random_iot_records, MockedPostgresConnection
-from pytest import MonkeyPatch
+from pytest import MonkeyPatch, LogCaptureFixture
 
 
 @pytest.mark.smoke
@@ -14,9 +14,9 @@ def test_upsert_single_failed_conn(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_record: IOTRecord,
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     def mocked_failed_conn(
-        self,
         *args,
         **kwargs,
     ) -> None:
@@ -24,8 +24,9 @@ def test_upsert_single_failed_conn(
 
     monkeypatch.setattr(psycopg2, "connect", mocked_failed_conn)
 
-    with pytest.raises(Exception, match="^Failed to connect$"):
+    with caplog.at_level("ERROR"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
+        assert "Failed to connect" in caplog.text
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(
@@ -54,9 +55,9 @@ def test_upsert_batch_failed_conn(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_records: list[IOTRecord],
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     def mocked_failed_conn(
-        self,
         *args,
         **kwargs,
     ) -> None:
@@ -64,8 +65,9 @@ def test_upsert_batch_failed_conn(
 
     monkeypatch.setattr(psycopg2, "connect", mocked_failed_conn)
 
-    with pytest.raises(Exception, match="^Failed to connect$"):
+    with caplog.at_level("ERROR"):
         assert not any(postgres_upsert_iot_records_client.upsert(iot_records))
+        assert "Failed to connect" in caplog.text
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         stmt = """
@@ -94,6 +96,7 @@ def test_upsert_batch_failed_conn(
 def test_upsert_single_wrong_credentials(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_record: IOTRecord,
+    caplog: LogCaptureFixture,
 ):
     postgres_upsert_iot_records_client = PostgresUpsertIOTRecordsClient(
         host=PostgresConfig.HOST,
@@ -103,8 +106,9 @@ def test_upsert_single_wrong_credentials(
         batch_upsert_size=1,
     )
 
-    with pytest.raises(Exception, match="^.*403.*ACCESS_REFISED.*$"):
+    with caplog.at_level("ERROR"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
+        assert "ERROR" in caplog.text
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(
@@ -129,6 +133,7 @@ def test_upsert_single_wrong_credentials(
 def test_upsert_single_wrong_host(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_record: IOTRecord,
+    caplog: LogCaptureFixture,
 ):
     postgres_upsert_iot_records_client = PostgresUpsertIOTRecordsClient(
         host="wrong",
@@ -138,8 +143,9 @@ def test_upsert_single_wrong_host(
         batch_upsert_size=1,
     )
 
-    with pytest.raises(Exception, match="^.*403.*ACCESS_REFUSED.*$"):
+    with caplog.at_level("ERROR"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
+        assert "ERROR" in caplog.text
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(

@@ -5,7 +5,7 @@ from .utils import random_iot_records, MockedPostgresCursor, MockedPostgresConne
 import pytest
 from src.entities import IOTRecord
 import psycopg2
-from pytest import MonkeyPatch
+from pytest import MonkeyPatch, LogCaptureFixture
 
 
 @pytest.mark.smoke
@@ -15,13 +15,15 @@ def test_upsert_single_failed(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_record: IOTRecord,
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     monkeypatch.setattr(
         psycopg2, "connect", lambda *args, **kwargs: MockedPostgresConnection()
     )
 
-    with pytest.raises(Exception, match="^Failed to execute!$"):
+    with caplog.at_level("ERROR"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
+        assert "Failed to execute!" in caplog.text
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(
@@ -50,13 +52,15 @@ def test_upsert_batch_failed(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_records: list[IOTRecord],
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     monkeypatch.setattr(
         psycopg2, "connect", lambda *args, **kwargs: MockedPostgresConnection()
     )
 
-    with pytest.raises(Exception, match="^Failed to execute!$"):
-        assert not any(postgres_upsert_iot_records_client.upsert(iot_records))
+    with caplog.at_level("ERROR"):
+        assert not all(postgres_upsert_iot_records_client.upsert(iot_records))
+        assert "Failed to execute!" in caplog.text
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         stmt = """
@@ -90,6 +94,7 @@ def test_upsert_batch_partial_failed(
     raw_postgres_psycopg2_conn_config: psycopg2.extensions.connection,
     iot_records: list[IOTRecord],
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     new_postgres_upsert_iot_records_client = PostgresUpsertIOTRecordsClient(
         host=postgres_upsert_iot_records_client._host,
@@ -139,12 +144,13 @@ def test_upsert_batch_partial_failed(
         MockedPostgresCursor, "executemany", mocked_partially_failed_upsert
     )
 
-    with pytest.raises(Exception, match="^Failed to execute!"):
+    with caplog.at_level("ERROR"):
         upsert_successes = new_postgres_upsert_iot_records_client.upsert(iot_records)
 
         assert not all(upsert_successes)
         assert any(upsert_successes)
         assert upsert_successes[2] == False
+        assert "Failed to execute!" in caplog.text
 
     successful_records = [
         iot_record

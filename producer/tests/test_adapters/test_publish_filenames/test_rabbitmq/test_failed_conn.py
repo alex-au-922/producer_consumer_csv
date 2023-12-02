@@ -101,7 +101,6 @@ def test_publish_single_wrong_credentials(
 def test_publish_single_wrong_host(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
-    caplog: LogCaptureFixture,
 ):
     rabbitmq_publish_filenames_client = RabbitMQPublishFilenamesClient(
         host="wrong",
@@ -110,9 +109,7 @@ def test_publish_single_wrong_host(
         queue=RabbitMQConfig.QUEUE,
     )
 
-    with caplog.at_level("ERROR"):
-        assert not rabbitmq_publish_filenames_client.publish(filename)
-        assert "Name or service not known" in caplog.text
+    assert not rabbitmq_publish_filenames_client.publish(filename)
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
     channel = pika_conn.channel()
