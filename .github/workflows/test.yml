@@ -214,7 +214,7 @@ jobs:
       - name: Generate coverage report
         run: |
           coverage report -m
-          coverage html --omit="*/test*"
+          coverage html --omit="*/tests/*"
       - name: upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

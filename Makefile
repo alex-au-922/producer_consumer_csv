@@ -44,3 +44,7 @@ test_consumer:
 	export RABBITMQ_PASSWORD=$(RABBITMQ_PASSWORD) && \
 	export QUEUE_NAME=$(QUEUE_NAME) && \
 	COVERAGE_FILE=.coverage_consumer coverage run -m pytest -vx consumer/tests
+coverage_report:
+	coverage combine .coverage_producer .coverage_consumer && \
+	coverage report -m --omit="*/tests/*"
+test: test_producer test_consumer coverage_report
