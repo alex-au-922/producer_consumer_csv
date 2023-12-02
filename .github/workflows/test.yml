@@ -82,6 +82,7 @@ jobs:
         working-directory: ${{env.WORKDIR}}
         run: pip install -r requirements-dev.txt
       - name: Run tests
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           coverage run -m pytest -v producer/tests
         env:
@@ -158,6 +159,7 @@ jobs:
         working-directory: ${{env.WORKDIR}}
         run: pip install -r requirements-dev.txt
       - name: Run tests
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           coverage run -m pytest -v consumer/tests
         env:
