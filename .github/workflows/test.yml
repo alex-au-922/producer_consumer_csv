@@ -7,16 +7,16 @@ jobs:
   load-dotenv:
     runs-on: ubuntu-latest
     outputs:
-      postgres-version-tag: ${{ steps.load-dotenv.outputs.postgres-version-tag }}
-      postgres-port: ${{ steps.load-dotenv.outputs.postgres-port }}
-      postgres-user: ${{ steps.load-dotenv.outputs.postgres-user }}
-      postgres-password: ${{ steps.load-dotenv.outputs.postgres-password }}
-      postgres-database: ${{ steps.load-dotenv.outputs.postgres-database }}
-      rabbitmq-version-tag: ${{ steps.load-dotenv.outputs.rabbitmq-version-tag }}
-      rabbitmq-port: ${{ steps.load-dotenv.outputs.rabbitmq-port }}
-      rabbitmq-user: ${{ steps.load-dotenv.outputs.rabbitmq-user }}
-      rabbitmq-password: ${{ steps.load-dotenv.outputs.rabbitmq-password }}
-      queue-name: ${{ steps.load-dotenv.outputs.queue-name }}
+      postgres-version-tag: ${{ steps.load-dotenv.outputs.POSTGRES_VERSION_TAG }}
+      postgres-port: ${{ steps.load-dotenv.outputs.POSTGRES_PORT }}
+      postgres-user: ${{ steps.load-dotenv.outputs.POSTGRES_USER }}
+      postgres-password: ${{ steps.load-dotenv.outputs.POSTGRES_PASSWORD }}
+      postgres-database: ${{ steps.load-dotenv.outputs.POSTGRES_DATABASE }}
+      rabbitmq-version-tag: ${{ steps.load-dotenv.outputs.RABBITMQ_VERSION_TAG }}
+      rabbitmq-port: ${{ steps.load-dotenv.outputs.RABBITMQ_PORT }}
+      rabbitmq-user: ${{ steps.load-dotenv.outputs.RABBITMQ_USER }}
+      rabbitmq-password: ${{ steps.load-dotenv.outputs.RABBITMQ_PASSWORD }}
+      queue-name: ${{ steps.load-dotenv.outputs.QUEUE_NAME }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
