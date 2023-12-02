@@ -1,6 +1,7 @@
 import pytest
 from .utils import random_filenames
 from src.adapters.publish_filenames.rabbitmq import RabbitMQPublishFilenamesClient
+from src.deployments.script.config import RabbitMQConfig
 import pika
 from pytest import MonkeyPatch
 
@@ -70,14 +71,14 @@ def test_publish_batch_failed_conn(
 @pytest.mark.smoke
 @pytest.mark.parametrize("filename", random_filenames())
 def test_publish_single_wrong_credentials(
-    rabbitmq_config: dict,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
 ):
-    copied_rabbitmq_config = rabbitmq_config.copy()
-    copied_rabbitmq_config["credentials_service"] = lambda: ("wrong", "wrong")
     rabbitmq_publish_filenames_client = RabbitMQPublishFilenamesClient(
-        **copied_rabbitmq_config
+        host=RabbitMQConfig.HOST,
+        port=RabbitMQConfig.PORT,
+        credentials_service=lambda: ("wrong", "wrong"),
+        queue=RabbitMQConfig.QUEUE,
     )
 
     with pytest.raises(Exception) as e:
@@ -95,14 +96,14 @@ def test_publish_single_wrong_credentials(
 @pytest.mark.smoke
 @pytest.mark.parametrize("filename", random_filenames())
 def test_publish_single_wrong_host(
-    rabbitmq_config: dict,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
 ):
-    copied_rabbitmq_config = rabbitmq_config.copy()
-    copied_rabbitmq_config["host"] = "wrong"
     rabbitmq_publish_filenames_client = RabbitMQPublishFilenamesClient(
-        **copied_rabbitmq_config
+        host="wrong",
+        port=RabbitMQConfig.PORT,
+        credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
+        queue=RabbitMQConfig.QUEUE,
     )
 
     with pytest.raises(Exception) as e:

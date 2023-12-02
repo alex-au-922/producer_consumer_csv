@@ -1,0 +1,1 @@
+from src.adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient

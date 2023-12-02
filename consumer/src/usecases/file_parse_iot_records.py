@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Iterator, overload, Sequence
-from entities import IOTRecord
+from ..entities import IOTRecord
 
 
 class FileParseIOTRecordsClient(ABC):

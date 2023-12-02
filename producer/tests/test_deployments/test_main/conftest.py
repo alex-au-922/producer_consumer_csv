@@ -4,44 +4,29 @@ import pika
 import pytest
 from pytest import TempdirFactory
 import pathlib
-import os
-
-
-@pytest.fixture(scope="session")
-def mock_rabbitmq_config() -> Type[RabbitMQConfig]:
-    class MockedRabbitMQConfig(RabbitMQConfig):
-        HOST = "localhost"
-        PORT = 5672
-        USERNAME = "rabbitmq"
-        PASSWORD = "rabbitmq"
-        QUEUE = "filenames"
-
-    return MockedRabbitMQConfig
 
 
 @pytest.fixture(scope="session")
 def mock_project_config(tmpdir_factory: TempdirFactory) -> None:
     class MockedProjectConfig(ProjectConfig):
         TARGET_FILE_DIR = str(tmpdir_factory.mktemp("artifact"))
-        TARGET_FILE_EXTENSION = ".csv"
+        TARGET_FILE_EXTENSION = ProjectConfig.TARGET_FILE_EXTENSION
 
     return MockedProjectConfig
 
 
 @pytest.fixture(scope="function")
-def raw_rabbitmq_pika_conn_config(
-    mock_rabbitmq_config: Type[RabbitMQConfig],
-) -> tuple[pika.BaseConnection, str]:
+def raw_rabbitmq_pika_conn_config() -> tuple[pika.BaseConnection, str]:
     pika_conn = pika.BlockingConnection(
         pika.ConnectionParameters(
-            host=mock_rabbitmq_config.HOST,
-            port=mock_rabbitmq_config.PORT,
+            host=RabbitMQConfig.HOST,
+            port=RabbitMQConfig.PORT,
             credentials=pika.PlainCredentials(
-                mock_rabbitmq_config.USERNAME, mock_rabbitmq_config.PASSWORD
+                RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD
             ),
         )
     )
-    return pika_conn, mock_rabbitmq_config.QUEUE
+    return pika_conn, RabbitMQConfig.QUEUE
 
 
 @pytest.fixture(scope="function", autouse=True)

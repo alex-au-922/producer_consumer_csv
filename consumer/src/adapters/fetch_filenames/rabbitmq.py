@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from usecases import FetchFilenameClient
+from ...usecases import FetchFilenameClient
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties

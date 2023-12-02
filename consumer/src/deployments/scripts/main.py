@@ -1,10 +1,10 @@
-from adapters.fetch_filenames.rabbitmq import RabbitMQFetchFilenamesClient
-from adapters.file_parse_iot_records.csv import CSVParseIOTRecordsClient
-from adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient
-from config import RabbitMQConfig, PostgresConfig, CSVParserConfig
+from ...adapters.fetch_filenames.rabbitmq import RabbitMQFetchFilenamesClient
+from ...adapters.file_parse_iot_records.csv import CSVParseIOTRecordsClient
+from ...adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient
+from .config import RabbitMQConfig, PostgresConfig, CSVParserConfig
 from setup_logging import setup_logging
 import logging
-from entities import IOTRecord
+from ...entities import IOTRecord
 
 setup_logging()
 

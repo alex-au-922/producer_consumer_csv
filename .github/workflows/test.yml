@@ -36,13 +36,18 @@ jobs:
           echo "RABBITMQ_USER=$RABBITMQ_USER" >> $GITHUB_OUTPUT
           echo "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" >> $GITHUB_OUTPUT
           echo "QUEUE_NAME=$QUEUE_NAME" >> $GITHUB_OUTPUT
-  test:
+  test-producer:
     needs: load-dotenv
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      contents: write
-      id-token: write
+    env:
+      WATCH_FILE_PATTERNS: |
+        producer/**/*.py
+        producer/requirements-dev.txt
+      COVERAGE_FILE: .coverage_producer
+      WORKDIR: producer
+    outputs:
+      coverage-file-cache-path: ${{ steps.output-coverage-file.outputs.COVERAGE_FILE_CACHE_PATH }}
+      coverage-file-cache-key: ${{ steps.output-coverage-file.outputs.COVERAGE_FILE_CACHE_KEY }}
     services:
       rabbitmq:
         image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
@@ -63,18 +68,21 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: |
-            producer/requirements-dev.txt
-            consumer/requirements-dev.txt
+          cache-dependency-path: ${{env.WORKDIR}}/requirements-dev.txt
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{env.COVERAGE_FILE}}
+          key: ${{ runner.os }}-coverage-producer-${{ hashFiles(env.WATCH_FILE_PATTERNS) }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-producer-
       - name: Install dependencies
-        run: |
-          pip install -r producer/requirements-dev.txt
-          pip install -r consumer/requirements-dev.txt
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{env.WORKDIR}}
+        run: pip install -r requirements-dev.txt
       - name: Run tests
         run: |
-          coverage run -m pytest -v producer/tests consumer/tests
-          coverage html
-          coverage report -m
+          coverage run -m pytest -v producer/tests
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ needs.load-dotenv.outputs.postgres-port }}
@@ -86,6 +94,120 @@ jobs:
           RABBITMQ_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
           QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
+      - name: Output coverage file
+        id: output-coverage-file
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "COVERAGE_FILE_CACHE_PATH=${{env.COVERAGE_FILE}}" >> $GITHUB_OUTPUT
+          echo "COVERAGE_FILE_CACHE_KEY=${{ runner.os }}-coverage-producer-${{ hashFiles(env.WATCH_FILE_PATTERNS) }}" >> $GITHUB_OUTPUT
+  test-consumer:
+    needs: load-dotenv
+    runs-on: ubuntu-latest
+    env:
+      WATCH_FILE_PATTERNS: |
+        consumer/**/*.py
+        consumer/requirements-dev.txt
+      COVERAGE_FILE: .coverage_consumer
+      WORKDIR: consumer
+    outputs:
+      coverage-file-cache-path: ${{ steps.output-coverage-file.outputs.COVERAGE_FILE_CACHE_PATH }}
+      coverage-file-cache-key: ${{ steps.output-coverage-file.outputs.COVERAGE_FILE_CACHE_KEY }}
+    services:
+      rabbitmq:
+        image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
+        env:
+          RABBITMQ_DEFAULT_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_DEFAULT_PASS: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_running"
+          --health-interval 5s
+          --health-timeout 30s
+          --health-retries 3
+        ports:
+          - ${{ needs.load-dotenv.outputs.rabbitmq-port }}:5672
+      postgres:
+        image: postgres:${{ needs.load-dotenv.outputs.postgres-version-tag }}
+        env:
+          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-user }}
+          POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
+          POSTGRES_DB: ${{ needs.load-dotenv.outputs.postgres-database }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 30s
+          --health-retries 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ${{env.WORKDIR}}/requirements-dev.txt
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{env.COVERAGE_FILE}}
+          key: ${{ runner.os }}-coverage-consumer-${{ hashFiles(env.WATCH_FILE_PATTERNS) }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-consumer-
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{env.WORKDIR}}
+        run: pip install -r requirements-dev.txt
+      - name: Run tests
+        run: |
+          coverage run -m pytest -v consumer/tests
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: ${{ needs.load-dotenv.outputs.postgres-port }}
+          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-user }}
+          POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
+          POSTGRES_DATABASE: ${{ needs.load-dotenv.outputs.postgres-database }}
+          RABBITMQ_HOST: localhost
+          RABBITMQ_PORT: ${{ needs.load-dotenv.outputs.rabbitmq-port }}
+          RABBITMQ_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
+          QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
+      - name: Output coverage file
+        id: output-coverage-file
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "COVERAGE_FILE_CACHE_PATH=${{env.COVERAGE_FILE}}" >> $GITHUB_OUTPUT
+          echo "COVERAGE_FILE_CACHE_KEY=${{ runner.os }}-coverage-consumer-${{ hashFiles(env.WATCH_FILE_PATTERNS) }}" >> $GITHUB_OUTPUT
+  coverage:
+    needs: [test-producer, test-consumer]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Retrieve producer coverage file
+        uses: actions/cache@v2
+        id: producer-cache
+        with:
+          path: ${{ needs.test-producer.outputs.coverage-file-cache-path }}
+          key: ${{ needs.test-producer.outputs.coverage-file-cache-key }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-producer-
+      - name: Retrieve consumer coverage file
+        uses: actions/cache@v2
+        id: consumer-cache
+        with:
+          path: ${{ needs.test-consumer.outputs.coverage-file-cache-path }}
+          key: ${{ needs.test-consumer.outputs.coverage-file-cache-key }}
+          restore-keys: |
+            ${{ runner.os }}-coverage-consumer-
+      - name: Combine coverage files
+        run: |
+          coverage combine ${{ needs.test-producer.outputs.coverage-file-cache-path }} ${{ needs.test-consumer.outputs.coverage-file-cache-path }}
+      - name: Generate coverage report
+        run: |
+          coverage report -m
+          coverage html
       - name: upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

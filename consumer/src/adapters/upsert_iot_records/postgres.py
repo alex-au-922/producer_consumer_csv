@@ -4,8 +4,8 @@ from typing import Iterator, Optional, Sequence, overload, TypeVar
 from typing_extensions import override
 import psycopg2
 from psycopg2.extensions import connection
-from usecases import UpsertIOTRecordsClient
-from entities import IOTRecord
+from ...usecases import UpsertIOTRecordsClient
+from ...entities import IOTRecord
 from collections.abc import Callable
 
 T = TypeVar("T")

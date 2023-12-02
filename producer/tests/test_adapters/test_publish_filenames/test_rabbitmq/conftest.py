@@ -1,40 +1,32 @@
 from src.adapters.publish_filenames.rabbitmq import RabbitMQPublishFilenamesClient
+from src.deployments.script.config import RabbitMQConfig
 import pika
 import pytest
 from pytest import MonkeyPatch
 
 
-@pytest.fixture(scope="session")
-def rabbitmq_config() -> dict:
-    return {
-        "host": "localhost",
-        "port": 5672,
-        "credentials_service": lambda: ("rabbitmq", "rabbitmq"),
-        "queue": "filenames",
-    }
+@pytest.fixture(scope="function")
+def rabbitmq_publish_filenames_client() -> RabbitMQPublishFilenamesClient:
+    return RabbitMQPublishFilenamesClient(
+        host=RabbitMQConfig.HOST,
+        port=RabbitMQConfig.PORT,
+        credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
+        queue=RabbitMQConfig.QUEUE,
+    )
 
 
 @pytest.fixture(scope="function")
-def rabbitmq_publish_filenames_client(
-    rabbitmq_config: dict,
-) -> RabbitMQPublishFilenamesClient:
-    return RabbitMQPublishFilenamesClient(**rabbitmq_config)
-
-
-@pytest.fixture(scope="function")
-def raw_rabbitmq_pika_conn_config(
-    rabbitmq_config: dict,
-) -> tuple[pika.BaseConnection, str]:
+def raw_rabbitmq_pika_conn_config() -> tuple[pika.BaseConnection, str]:
     pika_conn = pika.BlockingConnection(
         pika.ConnectionParameters(
-            host=rabbitmq_config["host"],
-            port=rabbitmq_config["port"],
+            host=RabbitMQConfig.HOST,
+            port=RabbitMQConfig.PORT,
             credentials=pika.PlainCredentials(
-                *rabbitmq_config["credentials_service"]()
+                RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD
             ),
         )
     )
-    return pika_conn, rabbitmq_config["queue"]
+    return pika_conn, RabbitMQConfig.QUEUE
 
 
 @pytest.fixture(scope="function", autouse=True)
