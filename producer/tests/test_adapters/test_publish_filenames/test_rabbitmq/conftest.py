@@ -38,12 +38,13 @@ def raw_rabbitmq_pika_conn_config(
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_rabbitmq_queue(
+def setup_teardown_rabbitmq_queue(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
 ) -> None:
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
     channel = pika_conn.channel()
+    channel.queue_declare(queue=queue, durable=True)
     channel.queue_purge(queue=queue)
     yield
     channel.queue_purge(queue=queue)
