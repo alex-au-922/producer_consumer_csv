@@ -36,11 +36,9 @@ jobs:
           echo "RABBITMQ_USER=$RABBITMQ_USER" >> $GITHUB_OUTPUT
           echo "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" >> $GITHUB_OUTPUT
           echo "QUEUE_NAME=$QUEUE_NAME" >> $GITHUB_OUTPUT
-  test-producer:
+  test:
     needs: load-dotenv
     runs-on: ubuntu-latest
-    env:
-      WORK_DIR: producer
     services:
       rabbitmq:
         image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
@@ -61,15 +59,17 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: ${{ env.WORK_DIR }}/requirements-dev.txt
+          cache-dependency-path: |
+            producer/requirements-dev.txt
+            consumer/requirements-dev.txt
       - name: Install dependencies
-        working-directory: ${{ env.WORK_DIR }}
         run: |
-          pip install -r requirements-dev.txt
+          pip install -r producer/requirements-dev.txt
+          pip install -r consumer/requirements-dev.txt
       - name: Run tests
-        working-directory: ${{ env.WORK_DIR }}
         run: |
-          coverage run -m pytest -v
+          coverage run -m pytest -v producer/tests consumer/tests
+          coverage html
           coverage report -m
         env:
           POSTGRES_HOST: localhost
@@ -85,7 +85,27 @@ jobs:
       - name: upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: ${{ env.WORK_DIR }}/htmlcov
+          path: ./htmlcov/
       - name: deploy to Github Pages
         uses: actions/deploy-pages@v2
         id: deployment
+      - name: Coverage Badge
+        uses: tj-actions/coverage-badge-py@v2
+      - name: Verify Changed files
+        uses: tj-actions/verify-changed-files@v16
+        id: verify-changed-files
+        with:
+          files: coverage.svg
+      - name: Commit files
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add coverage.svg
+          git commit -m "Updated coverage.svg"
+      - name: Push changes
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
