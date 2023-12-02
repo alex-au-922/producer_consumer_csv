@@ -1,14 +1,12 @@
 from contextlib import contextmanager
-from usecases import PublishFilenamesClient
+from ...usecases import PublishFilenamesClient
 import pika
-from typing import Iterator, Optional, overload, Sequence, TYPE_CHECKING
+from pika.channel import Channel
+from pika.connection import Connection
+from typing import Iterator, Optional, overload, Sequence
 from typing_extensions import override
 from collections.abc import Callable
 import logging
-
-if TYPE_CHECKING:
-    from pika.channel import Channel
-    from pika.connection import Connection
 
 
 class RabbitMQPublishFilenamesClient(PublishFilenamesClient):
@@ -27,11 +25,11 @@ class RabbitMQPublishFilenamesClient(PublishFilenamesClient):
 
     @overload
     def publish(self, filename: str) -> bool:
-        ...
+        pass
 
     @overload
     def publish(self, filename: Sequence[str]) -> list[bool]:
-        ...
+        pass
 
     @override
     def publish(self, filename: str | Sequence[str]) -> bool | list[bool]:
@@ -81,24 +79,20 @@ class RabbitMQPublishFilenamesClient(PublishFilenamesClient):
 
     def _publish_batch(self, filenames: Sequence[str]) -> list[bool]:
         successes = []
-        try:
-            with self._get_amqp_conn() as connection:
-                channel = connection.channel()
-                channel.queue_declare(
-                    queue=self._queue,
-                    durable=True,
-                )
-                for filename in filenames:
-                    try:
-                        self._amqp_publish(channel, filename)
-                        successes.append(True)
-                    except Exception as e:
-                        logging.exception(e)
-                        successes.append(False)
-        except Exception as e:
-            logging.exception(e)
-            self._reset_conn()
-            return [False] * len(filenames)
+        for filename in filenames:
+            try:
+                with self._get_amqp_conn() as connection:
+                    channel = connection.channel()
+                    channel.queue_declare(
+                        queue=self._queue,
+                        durable=True,
+                    )
+                    self._amqp_publish(channel, filename)
+                    successes.append(True)
+            except Exception as e:
+                logging.exception(e)
+                self._reset_conn()
+                successes.append(False)
         return successes
 
     @override
@@ -106,8 +100,7 @@ class RabbitMQPublishFilenamesClient(PublishFilenamesClient):
         try:
             if self._conn is not None:
                 self._conn.close()
-                return True
-            return False
+            return True
         except Exception as e:
             logging.exception(e)
             return False

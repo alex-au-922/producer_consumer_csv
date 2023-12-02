@@ -17,6 +17,12 @@ pytest = "^7.4.3"
 coverage = "^7.3.2"
 mypy = "^1.7.1"
 
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "smoke: quick smoke tests",
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

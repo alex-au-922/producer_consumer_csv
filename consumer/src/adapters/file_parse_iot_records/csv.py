@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from decimal import Decimal
-from typing import Iterator, Optional, overload, Sequence, final, TYPE_CHECKING
+from typing import Iterator, Optional, overload, Sequence
 from typing_extensions import override
 from entities import IOTRecord
 from usecases import FileParseIOTRecordsClient
@@ -9,7 +9,6 @@ import csv
 import logging
 
 
-@final
 class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
     def __init__(
         self,

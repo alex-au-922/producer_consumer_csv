@@ -4,10 +4,7 @@ from adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient
 from config import RabbitMQConfig, PostgresConfig, CSVParserConfig
 from setup_logging import setup_logging
 import logging
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from entities import IOTRecord
+from entities import IOTRecord
 
 setup_logging()
 

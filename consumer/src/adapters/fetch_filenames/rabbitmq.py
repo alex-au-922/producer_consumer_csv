@@ -1,18 +1,15 @@
 from contextlib import contextmanager
 from usecases import FetchFilenameClient
 import pika
-from typing import Iterator, Optional, TYPE_CHECKING, final
+from pika.adapters.blocking_connection import BlockingChannel
+from pika.spec import Basic, BasicProperties
+from pika.connection import Connection
+from typing import Iterator, Optional
 from typing_extensions import override
 from collections.abc import Callable
 import logging
 
-if TYPE_CHECKING:
-    from pika.adapters.blocking_connection import BlockingChannel
-    from pika.spec import Basic, BasicProperties
-    from pika.connection import Connection
 
-
-@final
 class RabbitMQFetchFilenamesClient(FetchFilenameClient):
     def __init__(
         self,

@@ -1,28 +1,30 @@
 import pathlib
 from typing import Iterator
-from adapters.publish_filenames.rabbitmq import RabbitMQPublishFilenamesClient
+from ...adapters.publish_filenames.rabbitmq import RabbitMQPublishFilenamesClient
 from .config import RabbitMQConfig, ProjectConfig
 from .setup_logging import setup_logging
 import logging
 
 setup_logging()
 
-publish_filenames_client = RabbitMQPublishFilenamesClient(
-    host=RabbitMQConfig.HOST,
-    port=RabbitMQConfig.PORT,
-    credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
-    queue=RabbitMQConfig.QUEUE,
-)
+logging.getLogger("pika").setLevel(logging.WARNING)
 
 
 def traverse_files() -> Iterator[str]:
     for filename in pathlib.Path(ProjectConfig.TARGET_FILE_DIR).glob(
         f"*{ProjectConfig.TARGET_FILE_EXTENSION}"
     ):
-        yield filename
+        yield str(filename)
 
 
 def main() -> None:
+    publish_filenames_client = RabbitMQPublishFilenamesClient(
+        host=RabbitMQConfig.HOST,
+        port=RabbitMQConfig.PORT,
+        credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
+        queue=RabbitMQConfig.QUEUE,
+    )
+
     successes_map = {}
     try:
         for filename in traverse_files():

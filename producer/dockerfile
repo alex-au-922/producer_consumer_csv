@@ -32,5 +32,5 @@ WORKDIR ${HOME}
 
 COPY --from=build ${HOME}/.local ${HOME}/.local
 
-COPY src/ .
-CMD python3.11 -m deployments.script.main
+COPY src .
+CMD python3.11 -m src.deployments.script.main

@@ -13,3 +13,5 @@ export_requirements:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes && \
 	cd ../consumer && \
 	poetry export -f requirements.txt --output requirements.txt --without-hashes
+test_env:
+	docker compose -f docker-compose.test.yml up -d

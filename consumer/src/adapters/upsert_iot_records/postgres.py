@@ -1,19 +1,16 @@
 from contextlib import contextmanager
 import logging
-from typing import Iterator, Optional, Sequence, overload, TYPE_CHECKING, final, TypeVar
+from typing import Iterator, Optional, Sequence, overload, TypeVar
 from typing_extensions import override
 import psycopg2
+from psycopg2.extensions import connection
 from usecases import UpsertIOTRecordsClient
 from entities import IOTRecord
 from collections.abc import Callable
 
-if TYPE_CHECKING:
-    from psycopg2.extensions import connection
-
 T = TypeVar("T")
 
 
-@final
 class PostgresUpsertIOTRecordsClient(UpsertIOTRecordsClient):
     def __init__(
         self,

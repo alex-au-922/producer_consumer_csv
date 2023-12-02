@@ -2,9 +2,6 @@ name: Producer Consumer CI Test
 on:
   push:
     branches: ["dev"]
-    paths:
-      - 'env/test/**'
-      - 'modules/**'
   workflow_dispatch:
 jobs:
   load-dotenv:
@@ -42,6 +39,8 @@ jobs:
   test-producer:
     needs: load-dotenv
     runs-on: ubuntu-latest
+    env:
+      WORK_DIR: producer
     services:
       rabbitmq:
         image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
@@ -60,10 +59,33 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: requirements-dev.txt
+          cache-dependency-path: ${{ env.WORK_DIR }}/requirements-dev.txt
       - name: Install dependencies
+        working-directory: ${{ env.WORK_DIR }}
         run: |
           pip install -r requirements-dev.txt
       - name: Run tests
+        working-directory: ${{ env.WORK_DIR }}
         run: |
           coverage run -m pytest -v
+          coverage xml -o coverage.xml
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: ${{ needs.load-dotenv.outputs.postgres-port }}
+          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-user }}
+          POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
+          POSTGRES_DATABASE: ${{ needs.load-dotenv.outputs.postgres-database }}
+          RABBITMQ_HOST: localhost
+          RABBITMQ_PORT: ${{ needs.load-dotenv.outputs.rabbitmq-port }}
+          RABBITMQ_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
+          QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
+      - name: Upload coverage
+        uses: codecov/codecov-action@v2
+        with:
+          file: ${{ env.WORK_DIR }}/coverage.xml
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ${{ env.WORK_DIR }}/coverage.xml
