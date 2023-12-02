@@ -210,7 +210,7 @@ jobs:
           coverage combine ${{ needs.test-producer.outputs.coverage-file-cache-path }} ${{ needs.test-consumer.outputs.coverage-file-cache-path }}
       - name: Generate coverage report
         run: |
-          coverage report -m
+          coverage report --omit="*/tests/*" -m
           coverage html --omit="*/tests/*"
       - name: upload artifact
         uses: actions/upload-pages-artifact@v1
