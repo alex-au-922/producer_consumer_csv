@@ -25,7 +25,7 @@ test_producer:
 	export POSTGRES_PORT=$(POSTGRES_PORT) && \
 	export POSTGRES_USERNAME=$(POSTGRES_USERNAME) && \
 	export POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) && \
-	export POSTGRES_DATABASE=$(POSTGRES_DB) && \
+	export POSTGRES_DATABASE=$(POSTGRES_DATABASE) && \
 	export RABBITMQ_HOST=localhost && \
 	export RABBITMQ_PORT=$(RABBITMQ_PORT) && \
 	export RABBITMQ_USERNAME=$(RABBITMQ_USERNAME) && \
@@ -37,13 +37,13 @@ test_consumer:
 	export POSTGRES_PORT=$(POSTGRES_PORT) && \
 	export POSTGRES_USERNAME=$(POSTGRES_USERNAME) && \
 	export POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) && \
-	export POSTGRES_DATABASE=$(POSTGRES_DB) && \
+	export POSTGRES_DATABASE=$(POSTGRES_DATABASE) && \
 	export RABBITMQ_HOST=localhost && \
 	export RABBITMQ_PORT=$(RABBITMQ_PORT) && \
 	export RABBITMQ_USERNAME=$(RABBITMQ_USERNAME) && \
 	export RABBITMQ_PASSWORD=$(RABBITMQ_PASSWORD) && \
 	export QUEUE_NAME=$(QUEUE_NAME) && \
-	COVERAGE_FILE=.coverage_consumer coverage run -m pytest -vx consumer/tests
+	COVERAGE_FILE=.coverage_consumer coverage run -m pytest -vxs consumer/tests
 coverage_report:
 	coverage combine .coverage_producer .coverage_consumer && \
 	coverage report -m --omit="*/tests/*"

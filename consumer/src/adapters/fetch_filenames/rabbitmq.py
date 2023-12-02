@@ -78,8 +78,7 @@ class RabbitMQFetchFilenamesClient(FetchFilenameClient):
         try:
             if self._conn is not None:
                 self._conn.close()
-                return True
-            return False
+            return True
         except Exception as e:
             logging.exception(e)
             return False

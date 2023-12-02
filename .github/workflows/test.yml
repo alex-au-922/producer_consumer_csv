@@ -9,12 +9,12 @@ jobs:
     outputs:
       postgres-version-tag: ${{ steps.load-dotenv.outputs.POSTGRES_VERSION_TAG }}
       postgres-port: ${{ steps.load-dotenv.outputs.POSTGRES_PORT }}
-      postgres-user: ${{ steps.load-dotenv.outputs.POSTGRES_USER }}
+      postgres-username: ${{ steps.load-dotenv.outputs.POSTGRES_USERNAME }}
       postgres-password: ${{ steps.load-dotenv.outputs.POSTGRES_PASSWORD }}
       postgres-database: ${{ steps.load-dotenv.outputs.POSTGRES_DATABASE }}
       rabbitmq-version-tag: ${{ steps.load-dotenv.outputs.RABBITMQ_VERSION_TAG }}
       rabbitmq-port: ${{ steps.load-dotenv.outputs.RABBITMQ_PORT }}
-      rabbitmq-user: ${{ steps.load-dotenv.outputs.RABBITMQ_USER }}
+      rabbitmq-username: ${{ steps.load-dotenv.outputs.RABBITMQ_USERNAME }}
       rabbitmq-password: ${{ steps.load-dotenv.outputs.RABBITMQ_PASSWORD }}
       queue-name: ${{ steps.load-dotenv.outputs.QUEUE_NAME }}
     steps:
@@ -28,12 +28,12 @@ jobs:
           set +o allexport
           echo "POSTGRES_VERSION_TAG=$POSTGRES_VERSION_TAG" >> $GITHUB_OUTPUT
           echo "POSTGRES_PORT=$POSTGRES_PORT" >> $GITHUB_OUTPUT
-          echo "POSTGRES_USER=$POSTGRES_USER" >> $GITHUB_OUTPUT
+          echo "POSTGRES_USERNAME=$POSTGRES_USERNAME" >> $GITHUB_OUTPUT
           echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" >> $GITHUB_OUTPUT
           echo "POSTGRES_DATABASE=$POSTGRES_DATABASE" >> $GITHUB_OUTPUT
           echo "RABBITMQ_VERSION_TAG=$RABBITMQ_VERSION_TAG" >> $GITHUB_OUTPUT
           echo "RABBITMQ_PORT=$RABBITMQ_PORT" >> $GITHUB_OUTPUT
-          echo "RABBITMQ_USER=$RABBITMQ_USER" >> $GITHUB_OUTPUT
+          echo "RABBITMQ_USERNAME=$RABBITMQ_USERNAME" >> $GITHUB_OUTPUT
           echo "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" >> $GITHUB_OUTPUT
           echo "QUEUE_NAME=$QUEUE_NAME" >> $GITHUB_OUTPUT
   test-producer:
@@ -52,7 +52,7 @@ jobs:
       rabbitmq:
         image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
         env:
-          RABBITMQ_DEFAULT_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_DEFAULT_USER: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_DEFAULT_PASS: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
         options: >-
           --health-cmd "rabbitmq-diagnostics -q check_running"
@@ -86,14 +86,9 @@ jobs:
         run: |
           coverage run -m pytest -v producer/tests
         env:
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: ${{ needs.load-dotenv.outputs.postgres-port }}
-          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-user }}
-          POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
-          POSTGRES_DATABASE: ${{ needs.load-dotenv.outputs.postgres-database }}
           RABBITMQ_HOST: localhost
           RABBITMQ_PORT: ${{ needs.load-dotenv.outputs.rabbitmq-port }}
-          RABBITMQ_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_USERNAME: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
           QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
       - name: Output coverage file
@@ -117,7 +112,7 @@ jobs:
       rabbitmq:
         image: rabbitmq:${{ needs.load-dotenv.outputs.rabbitmq-version-tag }}
         env:
-          RABBITMQ_DEFAULT_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_DEFAULT_USER: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_DEFAULT_PASS: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
         options: >-
           --health-cmd "rabbitmq-diagnostics -q check_running"
@@ -129,9 +124,9 @@ jobs:
       postgres:
         image: postgres:${{ needs.load-dotenv.outputs.postgres-version-tag }}
         env:
-          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-user }}
+          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-username }}
           POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
-          POSTGRES_DB: ${{ needs.load-dotenv.outputs.postgres-database }}
+          POSTGRES_DATABASE: ${{ needs.load-dotenv.outputs.postgres-database }}
         options: >-
           --health-cmd pg_isready
           --health-interval 5s
@@ -164,12 +159,12 @@ jobs:
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ needs.load-dotenv.outputs.postgres-port }}
-          POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-user }}
+          POSTGRES_USERNAME: ${{ needs.load-dotenv.outputs.postgres-username }}
           POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
           POSTGRES_DATABASE: ${{ needs.load-dotenv.outputs.postgres-database }}
           RABBITMQ_HOST: localhost
           RABBITMQ_PORT: ${{ needs.load-dotenv.outputs.rabbitmq-port }}
-          RABBITMQ_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
+          RABBITMQ_USERNAME: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
           QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
       - name: Output coverage file

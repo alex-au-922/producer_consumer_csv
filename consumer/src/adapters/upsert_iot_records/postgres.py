@@ -64,7 +64,7 @@ class PostgresUpsertIOTRecordsClient(UpsertIOTRecordsClient):
                 sensor_id,
                 value
             ) VALUES (
-                %(datetime)s,
+                %(record_time)s,
                 %(sensor_id)s,
                 %(value)s
             ) ON CONFLICT (record_time, sensor_id) DO UPDATE SET
@@ -133,3 +133,13 @@ class PostgresUpsertIOTRecordsClient(UpsertIOTRecordsClient):
                 self._reset_conn()
                 successes.extend([False] * len(batch))
         return successes
+
+    @override
+    def close(self) -> bool:
+        try:
+            if self._conn is not None:
+                self._conn.close()
+            return True
+        except Exception as e:
+            logging.exception(e)
+            return False

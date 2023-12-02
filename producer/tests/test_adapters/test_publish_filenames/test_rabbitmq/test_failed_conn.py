@@ -37,13 +37,13 @@ def test_publish_single_failed_conn(
 
 @pytest.mark.smoke
 @pytest.mark.parametrize(
-    "random_filenames",
+    "filenames",
     [random_filenames() for _ in range(5)],
 )
 def test_publish_batch_failed_conn(
     rabbitmq_publish_filenames_client: RabbitMQPublishFilenamesClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
-    random_filenames: list[str],
+    filenames: list[str],
     monkeypatch: MonkeyPatch,
 ):
     def mocked_failed_conn(
@@ -56,13 +56,13 @@ def test_publish_batch_failed_conn(
     monkeypatch.setattr(pika.BlockingConnection, "__init__", mocked_failed_conn)
 
     with pytest.raises(Exception) as e:
-        assert not any(rabbitmq_publish_filenames_client.publish(random_filenames))
+        assert not any(rabbitmq_publish_filenames_client.publish(filenames))
         assert e.value == "Failed to connect"
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
     channel = pika_conn.channel()
-    for _ in random_filenames:
+    for _ in filenames:
         method_frame, _, body = channel.basic_get(queue=queue)
         assert method_frame is None
         assert body is None
@@ -148,15 +148,15 @@ def test_publish_single_failed_conn_reset_conn(
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "random_filenames",
+    "filenames",
     [random_filenames() for _ in range(5)],
 )
 def test_publish_batch_failed_conn_reset_conn(
     rabbitmq_publish_filenames_client: RabbitMQPublishFilenamesClient,
-    random_filenames: list[str],
+    filenames: list[str],
     monkeypatch: MonkeyPatch,
 ):
-    assert all(rabbitmq_publish_filenames_client.publish(random_filenames))
+    assert all(rabbitmq_publish_filenames_client.publish(filenames))
     conn = rabbitmq_publish_filenames_client._conn
 
     def mock_failed_basic_publish(
@@ -170,9 +170,9 @@ def test_publish_batch_failed_conn_reset_conn(
         pika.channel.Channel, "basic_publish", mock_failed_basic_publish
     )
 
-    assert not any(rabbitmq_publish_filenames_client.publish(random_filenames))
+    assert not any(rabbitmq_publish_filenames_client.publish(filenames))
 
     monkeypatch.undo()
 
-    assert rabbitmq_publish_filenames_client.publish(random_filenames)
+    assert rabbitmq_publish_filenames_client.publish(filenames)
     assert rabbitmq_publish_filenames_client._conn != conn

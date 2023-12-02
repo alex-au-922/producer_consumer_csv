@@ -29,35 +29,35 @@ def test_publish_single_failed(
 @pytest.mark.smoke
 @pytest.mark.usefixtures("patch_failed_publish")
 @pytest.mark.parametrize(
-    "random_filenames",
+    "filenames",
     [random_filenames() for _ in range(5)],
 )
 def test_publish_batch_failed(
     rabbitmq_publish_filenames_client: RabbitMQPublishFilenamesClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
-    random_filenames: list[str],
+    filenames: list[str],
 ):
     with pytest.raises(Exception) as e:
-        assert not any(rabbitmq_publish_filenames_client.publish(random_filenames))
+        assert not any(rabbitmq_publish_filenames_client.publish(filenames))
         assert e.value == "Failed to publish"
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
     channel = pika_conn.channel()
-    for _ in random_filenames:
+    for _ in filenames:
         method_frame, _, body = channel.basic_get(queue=queue)
         assert method_frame is None
         assert body is None
 
 
 @pytest.mark.parametrize(
-    "random_filenames",
+    "filenames",
     [random_filenames() for _ in range(5)],
 )
 def test_publish_batch_partial_failed(
     rabbitmq_publish_filenames_client: RabbitMQPublishFilenamesClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
-    random_filenames: list[str],
+    filenames: list[str],
     monkeypatch: MonkeyPatch,
 ):
     counter = 0
@@ -95,11 +95,11 @@ def test_publish_batch_partial_failed(
     )
 
     with pytest.raises(Exception) as e:
-        publish_successes = rabbitmq_publish_filenames_client.publish(random_filenames)
+        publish_successes = rabbitmq_publish_filenames_client.publish(filenames)
 
         successes_filenames = [
             filename
-            for filename, success in zip(random_filenames, publish_successes)
+            for filename, success in zip(filenames, publish_successes)
             if success
         ]
         assert not all(publish_successes)

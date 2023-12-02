@@ -25,8 +25,7 @@ file_parse_iot_records_client = CSVParseIOTRecordsClient(
 upsert_iot_records_client = PostgresUpsertIOTRecordsClient(
     host=PostgresConfig.HOST,
     port=PostgresConfig.PORT,
-    username=PostgresConfig.USERNAME,
-    password=PostgresConfig.PASSWORD,
+    credentials_service=lambda: (PostgresConfig.USERNAME, PostgresConfig.PASSWORD),
     database=PostgresConfig.DATABASE,
     batch_upsert_size=PostgresConfig.BATCH_UPSERT_SIZE,
 )
