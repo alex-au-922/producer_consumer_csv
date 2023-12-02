@@ -70,7 +70,7 @@ jobs:
         working-directory: ${{ env.WORK_DIR }}
         run: |
           coverage run -m pytest -v
-          coverage xml -o coverage.xml
+          coverage report -m
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ needs.load-dotenv.outputs.postgres-port }}
@@ -82,12 +82,10 @@ jobs:
           RABBITMQ_USER: ${{ needs.load-dotenv.outputs.rabbitmq-user }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
           QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
-      - name: Upload coverage
-        uses: codecov/codecov-action@v2
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          file: ${{ env.WORK_DIR }}/coverage.xml
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ${{ env.WORK_DIR }}/coverage.xml
+          path: ${{ env.WORK_DIR }}/htmlcov
+      - name: deploy to Github Pages
+        uses: actions/deploy-pages@v2
+        id: deployment
