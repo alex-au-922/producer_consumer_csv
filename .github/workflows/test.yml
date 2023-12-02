@@ -154,14 +154,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         working-directory: ${{env.WORKDIR}}
         run: pip install -r requirements-dev.txt
-      - name: Setup database
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          PGPASSWORD=${{ needs.load-dotenv.outputs.postgres-password }} \
-          psql -h localhost \
-            -p ${{ needs.load-dotenv.outputs.postgres-port }} \
-            -U ${{ needs.load-dotenv.outputs.postgres-username }} \
-            -tc "$(cat database/assets/create_records_table.sql)"
       - name: Run tests
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
