@@ -126,7 +126,7 @@ jobs:
         env:
           POSTGRES_USER: ${{ needs.load-dotenv.outputs.postgres-username }}
           POSTGRES_PASSWORD: ${{ needs.load-dotenv.outputs.postgres-password }}
-          POSTGRES_DATABASE: ${{ needs.load-dotenv.outputs.postgres-database }}
+          POSTGRES_DB: ${{ needs.load-dotenv.outputs.postgres-database }}
         options: >-
           --health-cmd pg_isready
           --health-interval 5s
