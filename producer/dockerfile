@@ -1,0 +1,36 @@
+ARG AMAZON_LINUX_VERSION_TAG
+FROM amazonlinux:${AMAZON_LINUX_VERSION_TAG} as build
+RUN yum update -y && \
+    yum install -y \
+    python3.11 \
+    python3-pip \
+    python3-devel \
+    shadow-utils && \
+    yum clean all
+
+RUN adduser app
+
+USER app
+ENV HOME=/home/app
+WORKDIR ${HOME}
+
+COPY requirements.txt .
+RUN pip3 install --user -r requirements.txt
+
+FROM amazonlinux:${AMAZON_LINUX_VERSION_TAG} as runtime
+RUN yum update -y && \
+    yum install -y \
+    python3.11 \
+    python3-pip \
+    shadow-utils && \
+    yum clean all
+RUN adduser app
+
+USER app
+ENV HOME=/home/app
+WORKDIR ${HOME}
+
+COPY --from=build ${HOME}/.local ${HOME}/.local
+
+COPY src/ .
+CMD python3.11 -m deployments.script.main

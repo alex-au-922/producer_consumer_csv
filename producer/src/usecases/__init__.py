@@ -1,1 +1,1 @@
-from .upsert_filenames import UpsertFilenamesClient
+from .publish_filenames import PublishFilenamesClient
