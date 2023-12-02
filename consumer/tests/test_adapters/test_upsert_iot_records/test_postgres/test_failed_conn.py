@@ -1,6 +1,6 @@
 import pytest
 from src.adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient
-from src.deployments.scripts.config import PostgresConfig
+from src.deployments.script.config import PostgresConfig
 from src.entities import IOTRecord
 import psycopg2
 from .utils import random_iot_records, MockedPostgresConnection
@@ -24,9 +24,8 @@ def test_upsert_single_failed_conn(
 
     monkeypatch.setattr(psycopg2, "connect", mocked_failed_conn)
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^Failed to connect$"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
-        assert e.value == "Failed to connect"
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(
@@ -65,9 +64,8 @@ def test_upsert_batch_failed_conn(
 
     monkeypatch.setattr(psycopg2, "connect", mocked_failed_conn)
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^Failed to connect$"):
         assert not any(postgres_upsert_iot_records_client.upsert(iot_records))
-        assert e.value == "Failed to connect"
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         stmt = """
@@ -105,9 +103,8 @@ def test_upsert_single_wrong_credentials(
         batch_upsert_size=1,
     )
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^.*403.*ACCESS_REFISED.*$"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
-        assert "ACCESS_REFUSED" in e.value and "403" in e.value
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(
@@ -141,9 +138,8 @@ def test_upsert_single_wrong_host(
         batch_upsert_size=1,
     )
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^.*403.*ACCESS_REFUSED.*$"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
-        assert "ACCESS_REFUSED" in e.value and "403" in e.value
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(

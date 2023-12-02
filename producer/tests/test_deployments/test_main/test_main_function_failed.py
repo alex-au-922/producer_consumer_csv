@@ -36,8 +36,7 @@ def test_main_flow_has_failed_files(
         "src.adapters.publish_filenames.rabbitmq.RabbitMQPublishFilenamesClient.publish",
         lambda self, filename: False,
     )
-    caplog.at_level("CRITICAL")
-    with pytest.raises(Exception) as e:
-        main()
-    assert "Failed to publish filenames" in str(e.value)
-    assert "Failed to publish filenames" in caplog.text
+    with caplog.at_level("ERROR"):
+        with pytest.raises(Exception, match="^Failed to publish filenames.*$"):
+            main()
+        assert "Failed to publish filenames" in caplog.text

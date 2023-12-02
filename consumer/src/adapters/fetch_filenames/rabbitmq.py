@@ -1,10 +1,12 @@
 from contextlib import contextmanager
+from datetime import datetime
+import time
 from ...usecases import FetchFilenameClient
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 from pika.connection import Connection
-from typing import Iterator, Optional
+from typing import Generator, Iterator, Optional
 from typing_extensions import override
 from collections.abc import Callable
 import logging
@@ -25,6 +27,7 @@ class RabbitMQFetchFilenamesClient(FetchFilenameClient):
         self._queue = queue
         self._conn: Optional[Connection] = None
         self._polling_timeout = polling_timeout
+        self._last_poll_time: Optional[datetime] = None
 
     def _reset_conn(self) -> None:
         self._conn = None
@@ -42,36 +45,44 @@ class RabbitMQFetchFilenamesClient(FetchFilenameClient):
             self._conn = pika.BlockingConnection(conn_parameters)
         yield self._conn
 
+    def _wait(self) -> None:
+        time.sleep(0.5)
+
     @override
-    def fetch(self) -> Iterator[str]:
+    def fetch(self) -> Generator[str, None, None]:
         while True:
             try:
+                method: Optional[Basic.Deliver] = None
                 with self._get_amqp_conn() as connection:
                     channel: BlockingChannel = connection.channel()
                     channel.queue_declare(queue=self._queue, durable=True)
-
-                    method: Optional[Basic.Deliver]
                     properties: Optional[BasicProperties]
                     body: Optional[bytes]
-                    for method, properties, body in channel.consume(
-                        queue=self._queue, inactivity_timeout=self._polling_timeout
-                    ):
-                        if method == None and properties == None and body == None:
-                            raise StopIteration
-                        try:
-                            yield body.decode("utf-8")
-                            channel.basic_ack(delivery_tag=method.delivery_tag)
-                        except Exception as e:
-                            logging.exception(e)
-                            channel.basic_nack(delivery_tag=method.delivery_tag)
-                            raise e
-            except StopIteration:
-                logging.info("No more filenames to fetch")
-                break
+
+                    method, properties, body = channel.basic_get(
+                        queue=self._queue, auto_ack=False
+                    )
+
+                    if method is None and properties is None and body is None:
+                        if self._last_poll_time is None:
+                            self._last_poll_time = datetime.now()
+                        if (
+                            datetime.now() - self._last_poll_time
+                        ).total_seconds() > self._polling_timeout:
+                            break
+                        self._wait()
+                        continue
+
+                    self._last_poll_time = None
+
+                    yield body.decode()
+
+                    channel.basic_ack(delivery_tag=method.delivery_tag)
             except Exception as e:
                 logging.exception(e)
+                if method is not None:
+                    channel.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
                 self._reset_conn()
-                raise e
 
     @override
     def close(self) -> bool:

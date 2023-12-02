@@ -20,9 +20,8 @@ def test_upsert_single_failed(
         psycopg2, "connect", lambda *args, **kwargs: MockedPostgresConnection()
     )
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^Failed to execute!$"):
         assert not postgres_upsert_iot_records_client.upsert(iot_record)
-        assert e.value == "Failed to execute!"
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         cursor.execute(
@@ -56,9 +55,8 @@ def test_upsert_batch_failed(
         psycopg2, "connect", lambda *args, **kwargs: MockedPostgresConnection()
     )
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^Failed to execute!$"):
         assert not any(postgres_upsert_iot_records_client.upsert(iot_records))
-        assert e.value == "Failed to execute!"
 
     with raw_postgres_psycopg2_conn_config.cursor() as cursor:
         stmt = """
@@ -141,13 +139,12 @@ def test_upsert_batch_partial_failed(
         MockedPostgresCursor, "executemany", mocked_partially_failed_upsert
     )
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception, match="^Failed to execute!"):
         upsert_successes = new_postgres_upsert_iot_records_client.upsert(iot_records)
 
         assert not all(upsert_successes)
         assert any(upsert_successes)
         assert upsert_successes[2] == False
-        assert e.value == "Failed to execute!"
 
     successful_records = [
         iot_record

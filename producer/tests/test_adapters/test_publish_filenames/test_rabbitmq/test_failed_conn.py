@@ -3,7 +3,7 @@ from .utils import random_filenames
 from src.adapters.publish_filenames.rabbitmq import RabbitMQPublishFilenamesClient
 from src.deployments.script.config import RabbitMQConfig
 import pika
-from pytest import MonkeyPatch
+from pytest import LogCaptureFixture, MonkeyPatch
 
 
 @pytest.mark.smoke
@@ -13,6 +13,7 @@ def test_publish_single_failed_conn(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     def mocked_failed_conn(
         self,
@@ -23,9 +24,9 @@ def test_publish_single_failed_conn(
 
     monkeypatch.setattr(pika.BlockingConnection, "__init__", mocked_failed_conn)
 
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         assert not rabbitmq_publish_filenames_client.publish(filename)
-        assert e.value == "Failed to connect"
+        assert "Failed to connect" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
@@ -45,6 +46,7 @@ def test_publish_batch_failed_conn(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filenames: list[str],
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     def mocked_failed_conn(
         self,
@@ -55,9 +57,9 @@ def test_publish_batch_failed_conn(
 
     monkeypatch.setattr(pika.BlockingConnection, "__init__", mocked_failed_conn)
 
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         assert not any(rabbitmq_publish_filenames_client.publish(filenames))
-        assert e.value == "Failed to connect"
+        assert "Failed to connect" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
@@ -73,6 +75,7 @@ def test_publish_batch_failed_conn(
 def test_publish_single_wrong_credentials(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
+    caplog: LogCaptureFixture,
 ):
     rabbitmq_publish_filenames_client = RabbitMQPublishFilenamesClient(
         host=RabbitMQConfig.HOST,
@@ -81,9 +84,9 @@ def test_publish_single_wrong_credentials(
         queue=RabbitMQConfig.QUEUE,
     )
 
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         assert not rabbitmq_publish_filenames_client.publish(filename)
-        assert "ACCESS_REFUSED" in e.value and "403" in e.value
+        assert "ACCESS_REFUSED" in caplog.text and "403" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
     channel = pika_conn.channel()
@@ -98,6 +101,7 @@ def test_publish_single_wrong_credentials(
 def test_publish_single_wrong_host(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
+    caplog: LogCaptureFixture,
 ):
     rabbitmq_publish_filenames_client = RabbitMQPublishFilenamesClient(
         host="wrong",
@@ -106,9 +110,9 @@ def test_publish_single_wrong_host(
         queue=RabbitMQConfig.QUEUE,
     )
 
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         assert not rabbitmq_publish_filenames_client.publish(filename)
-        assert "ACCESS_REFUSED" in e.value and "403" in e.value
+        assert "Name or service not known" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
     channel = pika_conn.channel()

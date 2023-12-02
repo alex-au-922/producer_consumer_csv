@@ -18,7 +18,7 @@ class RabbitMQConfig:
     USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
     PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     QUEUE = os.getenv("RABBITMQ_QUEUE", "filenames")
-    POLLING_TIMEOUT = int(os.getenv("RABBITMQ_POLLING_TIMEOUT", 600))
+    POLLING_TIMEOUT = int(os.getenv("RABBITMQ_POLLING_TIMEOUT", 10))
 
 
 class PostgresConfig:

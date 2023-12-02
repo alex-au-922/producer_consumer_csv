@@ -1,5 +1,5 @@
 from src.adapters.upsert_iot_records.postgres import PostgresUpsertIOTRecordsClient
-from src.deployments.scripts.config import PostgresConfig
+from src.deployments.script.config import PostgresConfig
 import psycopg2
 import pytest
 

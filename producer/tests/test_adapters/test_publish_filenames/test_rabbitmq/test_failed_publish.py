@@ -3,7 +3,7 @@ from .utils import random_filenames
 from src.adapters.publish_filenames.rabbitmq import RabbitMQPublishFilenamesClient
 import pika
 import pytest
-from pytest import MonkeyPatch
+from pytest import LogCaptureFixture, MonkeyPatch
 
 
 @pytest.mark.smoke
@@ -13,10 +13,11 @@ def test_publish_single_failed(
     rabbitmq_publish_filenames_client: RabbitMQPublishFilenamesClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
+    caplog: LogCaptureFixture,
 ):
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         assert not rabbitmq_publish_filenames_client.publish(filename)
-        assert e.value == "Failed to publish"
+        assert "Failed to publish" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
@@ -36,10 +37,11 @@ def test_publish_batch_failed(
     rabbitmq_publish_filenames_client: RabbitMQPublishFilenamesClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filenames: list[str],
+    caplog: LogCaptureFixture,
 ):
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         assert not any(rabbitmq_publish_filenames_client.publish(filenames))
-        assert e.value == "Failed to publish"
+        assert "Failed to publish" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
@@ -59,6 +61,7 @@ def test_publish_batch_partial_failed(
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filenames: list[str],
     monkeypatch: MonkeyPatch,
+    caplog: LogCaptureFixture,
 ):
     counter = 0
 
@@ -94,7 +97,7 @@ def test_publish_batch_partial_failed(
         mocked_partially_failed_basic_publish,
     )
 
-    with pytest.raises(Exception) as e:
+    with caplog.at_level("ERROR"):
         publish_successes = rabbitmq_publish_filenames_client.publish(filenames)
 
         successes_filenames = [
@@ -105,7 +108,7 @@ def test_publish_batch_partial_failed(
         assert not all(publish_successes)
         assert any(publish_successes)
         assert publish_successes[2] == False
-        assert e.value == "Failed to publish"
+        assert "Failed to publish" in caplog.text
 
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 

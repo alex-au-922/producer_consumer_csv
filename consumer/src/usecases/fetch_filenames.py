@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import Generator
 
 
 class FetchFilenameClient(ABC):
     @abstractmethod
-    def fetch(self) -> Iterator[str]:
+    def fetch(self) -> Generator[str, None, None]:
         ...
 
     @abstractmethod
