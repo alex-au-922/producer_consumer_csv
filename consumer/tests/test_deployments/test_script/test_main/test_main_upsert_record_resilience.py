@@ -58,6 +58,7 @@ def test_main_flow_single_upsert_record_failed_resilience(
 
     with open(random_csv_file, "r") as f:
         reader = csv.reader(f)
+        next(reader)
         for row in reader:
             record_time, sensor_id, value = row
 
@@ -136,6 +137,7 @@ def test_main_flow_single_upsert_step_failed_resilience(
 
     with open(random_csv_file, "r") as f:
         reader = csv.reader(f)
+        next(reader)
         for row in reader:
             record_time, sensor_id, value = row
 

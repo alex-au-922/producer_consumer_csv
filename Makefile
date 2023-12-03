@@ -7,7 +7,7 @@ build:
 	docker compose pull --ignore-buildable
 	docker compose build
 up:
-	docker compose up -d --wait && docker compose logs -f --tail 100 records_producer records_consumer
+	docker compose up -d && docker compose logs -f --tail 100 records_producer records_consumer
 logs:
 	docker compose logs -f --tail 100 records_producer records_consumer
 down:
@@ -16,6 +16,8 @@ stats:
 	docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}"
 setup_test_env:
 	docker compose -f docker-compose.test.yml up -d
+teardown_test_env:
+	docker compose -f docker-compose.test.yml down
 test_producer:
 	export POSTGRES_HOST=$(POSTGRES_HOST) && \
 	export POSTGRES_PORT=$(POSTGRES_PORT) && \
@@ -27,7 +29,7 @@ test_producer:
 	export RABBITMQ_USERNAME=$(RABBITMQ_USERNAME) && \
 	export RABBITMQ_PASSWORD=$(RABBITMQ_PASSWORD) && \
 	export QUEUE_NAME=$(QUEUE_NAME) && \
-	COVERAGE_FILE=.coverage_producer coverage run -m pytest -vx producer/tests
+	COVERAGE_FILE=.coverage_producer coverage run -m pytest -vx --last-failed producer/tests
 test_consumer:
 	export POSTGRES_HOST=$(POSTGRES_HOST) && \
 	export POSTGRES_PORT=$(POSTGRES_PORT) && \
@@ -47,7 +49,7 @@ coverage_report:
 	coverage report -m --omit="*/tests/*"
 test: test_producer test_consumer coverage_report
 
-generate_csv:
+generate_csv_demo:
 	python test_generator.py \
 		--num-sensors $(GEN_NUM_SENSORS) \
 		--num-records $(GEN_NUM_RECORDS) \
@@ -55,3 +57,12 @@ generate_csv:
 		--start-date $(GEN_START_DATE) \
 		--timezone $(GEN_TIMEZONE) \
 		--dir $(TARGET_FILE_DIR)
+
+generate_csv_end_to_end_test:
+	python test_generator.py \
+		--num-sensors 10 \
+		--num-records 5 \
+		--record-interval 1 \
+		--start-date 2021-01-01 \
+		--timezone Asia/Shanghai \
+		--dir records_test

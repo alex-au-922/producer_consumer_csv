@@ -55,6 +55,7 @@ def test_main_flow_single_cannot_read_file_throw_error(
 
     with open(random_csv_file, "r") as f:
         reader = csv.reader(f)
+        next(reader)
         for row in reader:
             record_time, sensor_id, value = row
 

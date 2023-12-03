@@ -19,6 +19,7 @@ class RabbitMQConfig:
     PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     QUEUE = os.getenv("RABBITMQ_QUEUE_NAME", "filenames")
     POLLING_TIMEOUT = int(os.getenv("RABBITMQ_POLLING_TIMEOUT", 10))
+    SOCKET_TIMEOUT = int(os.getenv("RABBITMQ_SOCKET_TIMEOUT", 86400))
 
 
 class PostgresConfig:
@@ -31,8 +32,5 @@ class PostgresConfig:
 
 
 class CSVParserConfig:
-    RECOGNIZED_DATETIME_FORMATS = os.getenv(
-        "CSV_PARSER_RECOGNIZED_DATETIME_FORMATS", ""
-    ).split(",")
     DELIMITER = os.getenv("CSV_PARSER_DELIMITER", ",")
     FILE_EXTENSION = os.getenv("CSV_PARSER_FILE_EXTENSION", ".csv")

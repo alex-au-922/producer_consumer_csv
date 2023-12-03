@@ -1,40 +1,16 @@
 ARG AMAZON_LINUX_VERSION_TAG
-FROM amazonlinux:${AMAZON_LINUX_VERSION_TAG} as build
+FROM amazonlinux:${AMAZON_LINUX_VERSION_TAG}
 RUN yum install -y \
     python3.11 \
-    python3.11-pip \
     python3.11-devel \
-    shadow-utils
+    python3.11-pip
 
-RUN adduser app
-ENV HOME=/home/app
-WORKDIR ${HOME}
-
-RUN chown -R app:app /home/app
-
-USER app
+WORKDIR /app
 
 COPY requirements.txt .
 
-RUN python3.11 -m pip install --user --no-warn-script-location -r requirements.txt
-
-FROM amazonlinux:2023.2.20231026.0 as runtime
-
-RUN yum install -y \
-    python3.11 \
-    python3.11-pip \
-    shadow-utils
-
-RUN adduser app
-WORKDIR /home/app
-
-RUN chown -R app:app /home/app
-
-USER app
-ENV HOME=/home/app
-WORKDIR ${HOME}
-
-COPY --from=build /home/app/.local /home/app/.local
+RUN python3.11 -m pip install -r requirements.txt
 
 COPY src ./src/
+
 CMD python3.11 -m src.deployments.script.main

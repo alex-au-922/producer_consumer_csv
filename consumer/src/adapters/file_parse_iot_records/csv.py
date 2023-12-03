@@ -14,12 +14,10 @@ from pathlib import Path
 class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
     def __init__(
         self,
-        recognized_datetime_formats: Sequence[str],
         delimiter: str = ",",
         file_extension: str = ".csv",
     ) -> None:
         self._delimiter = delimiter
-        self._recognized_datetime_formats = recognized_datetime_formats
         self._file_extension = file_extension
 
     @overload
@@ -63,12 +61,10 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
             logging.exception(e)
 
     def _parse_datetime(self, datetime_str: str) -> Optional[datetime]:
-        for datetime_format in self._recognized_datetime_formats:
-            try:
-                return datetime.strptime(datetime_str, datetime_format)
-            except ValueError:
-                pass
-        return None
+        try:
+            return datetime.fromisoformat(datetime_str)
+        except ValueError:
+            return None
 
     def _parse_value(self, value_str: str) -> Optional[Decimal]:
         try:
@@ -102,6 +98,7 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
             self._basic_file_check(filename)
             with open(filename) as csvfile:
                 reader = csv.reader(csvfile, delimiter=self._delimiter)
+                next(reader)  # skip header
                 return list(self._parse_iter(reader))
         except Exception as e:
             logging.exception(e)

@@ -42,6 +42,7 @@ def test_main_flow_single_no_failed_files(
 
     with open(random_csv_file, "r") as f:
         reader = csv.reader(f)
+        next(reader)
         for row in reader:
             record_time, sensor_id, value = row
 
@@ -111,6 +112,7 @@ def test_main_flow_batch_no_failed_files(
     for random_csv_file in random_csv_files:
         with open(random_csv_file, "r") as f:
             reader = csv.reader(f)
+            next(reader)
             for row in reader:
                 record_time, sensor_id, value = row
 
@@ -178,6 +180,7 @@ def test_main_flow_single_in_batch_no_failed_files(
 
     with open(random_csv_file, "r") as f:
         reader = csv.reader(f)
+        next(reader)
         for row in reader:
             record_time, sensor_id, value = row
 
@@ -247,6 +250,7 @@ def test_main_flow_batch_in_batch_no_failed_files(
     for random_csv_file in random_csv_files:
         with open(random_csv_file, "r") as f:
             reader = csv.reader(f)
+            next(reader)
             for row in reader:
                 record_time, sensor_id, value = row
 

@@ -19,7 +19,7 @@ jobs:
       rabbitmq-username: ${{ steps.load-dotenv.outputs.RABBITMQ_USERNAME }}
       rabbitmq-password: ${{ steps.load-dotenv.outputs.RABBITMQ_PASSWORD }}
       rabbitmq-queue-name: ${{ steps.load-dotenv.outputs.RABBITMQ_QUEUE_NAME }}
-      csv-parser-recognized-datetime-formats: ${{ steps.load-dotenv.outputs.CSV_PARSER_RECOGNIZED_DATETIME_FORMATS }}
+      rabbitmq-socket-timeout: ${{ steps.load-dotenv.outputs.RABBITMQ_SOCKET_TIMEOUT }}
       csv-parser-delimiter: ${{ steps.load-dotenv.outputs.CSV_PARSER_DELIMITER }}
       csv-parser-file-extension: ${{ steps.load-dotenv.outputs.CSV_PARSER_FILE_EXTENSION }}
     steps:
@@ -43,7 +43,7 @@ jobs:
           echo "RABBITMQ_USERNAME=$RABBITMQ_USERNAME" >> $GITHUB_OUTPUT
           echo "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" >> $GITHUB_OUTPUT
           echo "RABBITMQ_QUEUE_NAME=$RABBITMQ_QUEUE_NAME" >> $GITHUB_OUTPUT
-          echo "CSV_PARSER_RECOGNIZED_DATETIME_FORMATS=$CSV_PARSER_RECOGNIZED_DATETIME_FORMATS" >> $GITHUB_OUTPUT
+          echo "RABBITMQ_SOCKET_TIMEOUT=$RABBITMQ_SOCKET_TIMEOUT" >> $GITHUB_OUTPUT
           echo "CSV_PARSER_DELIMITER=$CSV_PARSER_DELIMITER" >> $GITHUB_OUTPUT
           echo "CSV_PARSER_FILE_EXTENSION=$CSV_PARSER_FILE_EXTENSION" >> $GITHUB_OUTPUT
   test-producer:
@@ -101,6 +101,7 @@ jobs:
           RABBITMQ_USERNAME: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
           RABBITMQ_QUEUE_NAME: ${{ needs.load-dotenv.outputs.rabbitmq-queue-name }}
+          RABBITMQ_SOCKET_TIMEOUT: ${{ needs.load-dotenv.outputs.rabbitmq-socket-timeout }}
           TARGET_FILE_DIR: ${{ needs.load-dotenv.outputs.target-file-dir }}
           TARGET_FILE_EXTENSION: ${{ needs.load-dotenv.outputs.target-file-extension }}
       - name: Output coverage file
@@ -181,7 +182,7 @@ jobs:
           RABBITMQ_USERNAME: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
           RABBITMQ_QUEUE_NAME: ${{ needs.load-dotenv.outputs.rabbitmq-queue-name }}
-          CSV_PARSER_RECOGNIZED_DATETIME_FORMATS: ${{ needs.load-dotenv.outputs.csv-parser-recognized-datetime-formats }}
+          RABBITMQ_SOCKET_TIMEOUT: ${{ needs.load-dotenv.outputs.rabbitmq-socket-timeout }}
           CSV_PARSER_DELIMITER: ${{ needs.load-dotenv.outputs.csv-parser-delimiter }}
           CSV_PARSER_FILE_EXTENSION: ${{ needs.load-dotenv.outputs.csv-parser-file-extension }}
       - name: Output coverage file

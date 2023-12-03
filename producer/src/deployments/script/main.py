@@ -23,6 +23,7 @@ def main() -> None:
         port=RabbitMQConfig.PORT,
         credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
         queue=RabbitMQConfig.QUEUE,
+        socket_timeout=RabbitMQConfig.SOCKET_TIMEOUT,
     )
 
     successes_map = {}

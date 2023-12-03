@@ -41,6 +41,8 @@ def test_parse_single_datetime_failed_ignore_row(
         iot_records = csv_parse_iot_records_client.parse(
             random_invalid_datetime_csv_file
         )
+
+        print(iot_records)
         assert len(iot_records) == 0
         assert "Unrecognized datetime format:" in caplog.text
         assert "Unrecognized value format:" not in caplog.text

@@ -2,3 +2,8 @@
 __pycache__
 .mypy_cache
 records
+records_test
+logs
+postgres-data
+postgres-logs
+rabbitmq-data

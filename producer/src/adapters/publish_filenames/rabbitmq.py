@@ -16,12 +16,14 @@ class RabbitMQPublishFilenamesClient(PublishFilenamesClient):
         port: int,
         credentials_service: Callable[[], tuple[str, str]],
         queue: str = "filenames",
+        socket_timeout: int = 86400,
     ) -> None:
         self._host = host
         self._port = port
         self._credentials_service = credentials_service
         self._queue = queue
         self._conn: Optional[Connection] = None
+        self._socket_timeout = socket_timeout
 
     @overload
     def publish(self, filename: str) -> bool:
@@ -49,6 +51,7 @@ class RabbitMQPublishFilenamesClient(PublishFilenamesClient):
                 host=self._host,
                 port=self._port,
                 credentials=credentials,
+                socket_timeout=self._socket_timeout,
             )
             self._conn = pika.BlockingConnection(conn_parameters)
         yield self._conn

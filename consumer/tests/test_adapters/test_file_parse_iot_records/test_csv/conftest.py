@@ -82,7 +82,6 @@ def random_invalid_value_ndjson_file(setup_tempdir: Path) -> Path:
 @pytest.fixture(scope="function")
 def csv_parse_iot_records_client() -> CSVParseIOTRecordsClient:
     return CSVParseIOTRecordsClient(
-        recognized_datetime_formats=CSVParserConfig.RECOGNIZED_DATETIME_FORMATS,
         delimiter=CSVParserConfig.DELIMITER,
         file_extension=CSVParserConfig.FILE_EXTENSION,
     )

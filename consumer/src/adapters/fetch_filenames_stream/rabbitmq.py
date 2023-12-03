@@ -21,6 +21,7 @@ class RabbitMQFetchFilenameStreamClient(FetchFilenameStreamClient[int]):
         credentials_service: Callable[[], tuple[str, str]],
         queue: str = "filenames",
         polling_timeout: int = 10,
+        socket_timeout: int = 86400,
     ) -> None:
         self._host = host
         self._port = port
@@ -30,6 +31,7 @@ class RabbitMQFetchFilenameStreamClient(FetchFilenameStreamClient[int]):
         self._channel: Optional[BlockingChannel] = None
         self._polling_timeout = polling_timeout
         self._last_poll_time: Optional[datetime] = None
+        self._socket_timeout = socket_timeout
 
     @overload
     def ack(self, message_receipt: int) -> bool:
@@ -104,6 +106,7 @@ class RabbitMQFetchFilenameStreamClient(FetchFilenameStreamClient[int]):
                 host=self._host,
                 port=self._port,
                 credentials=credentials,
+                socket_timeout=self._socket_timeout,
             )
             self._conn = pika.BlockingConnection(conn_parameters)
         yield self._conn

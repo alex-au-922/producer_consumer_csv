@@ -23,3 +23,4 @@ class RabbitMQConfig:
     USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
     PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
     QUEUE = os.getenv("RABBITMQ_QUEUE_NAME", "filenames")
+    SOCKET_TIMEOUT = int(os.getenv("RABBITMQ_SOCKET_TIMEOUT", 86400))

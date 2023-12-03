@@ -30,10 +30,10 @@ def main() -> None:
         credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
         queue=RabbitMQConfig.QUEUE,
         polling_timeout=RabbitMQConfig.POLLING_TIMEOUT,
+        socket_timeout=RabbitMQConfig.SOCKET_TIMEOUT,
     )
 
     file_parse_iot_records_client = CSVParseIOTRecordsClient(
-        recognized_datetime_formats=CSVParserConfig.RECOGNIZED_DATETIME_FORMATS,
         delimiter=CSVParserConfig.DELIMITER,
         file_extension=CSVParserConfig.FILE_EXTENSION,
     )
@@ -47,6 +47,8 @@ def main() -> None:
     )
 
     try:
+        logging.info("Starting to fetch filenames...")
+
         for filename, receipt in fetch_filenames_stream_client.fetch_stream():
             logging.info(f"Upserting {filename}...")
             iot_records_buffer: list[IOTRecord] = []
@@ -56,6 +58,8 @@ def main() -> None:
 
                     if len(iot_records_buffer) < PostgresConfig.BATCH_UPSERT_SIZE:
                         continue
+
+                    logging.info(f"Upserting {len(iot_records_buffer)} records...")
 
                     _upsert_iot_records_buffer(
                         iot_records_buffer, upsert_iot_records_client

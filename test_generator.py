@@ -4,12 +4,16 @@ from datetime import datetime, timedelta
 import random
 from zoneinfo import ZoneInfo
 from pathlib import Path
-from uuid import uuid4
+import uuid
 import logging
-from tqdm.auto import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import StringIO
 import os
+
+rng = random.Random()
+rng.seed(42)
+
+uuid.uuid4 = lambda: uuid.UUID(int=rng.getrandbits(128))
 
 logging.basicConfig(level=logging.INFO)
 
@@ -83,7 +87,7 @@ def generate_data(
             writer.writerows(
                 [
                     {
-                        "record_time": date.isoformat(),
+                        "record_time": date.isoformat(timespec="milliseconds"),
                         "sensor_id": sensor_id,
                         "value": random_value,
                     }
@@ -109,23 +113,22 @@ def main(
     base_dir = Path(dir)
     base_dir.mkdir(exist_ok=True)
     futures = []
-    with tqdm(total=num_sensors) as pbar:
-        with ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
-            for i in range(num_sensors):
-                sensor_id = f"{uuid4().hex[:8]}_{i}"
-                futures.append(
-                    executor.submit(
-                        generate_data,
-                        sensor_id,
-                        num_records,
-                        record_interval,
-                        start_date,
-                        base_dir,
-                    )
+    with ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
+        for i in range(num_sensors):
+            sensor_id = f"{uuid.uuid4().hex[:8]}_{i}"
+            futures.append(
+                executor.submit(
+                    generate_data,
+                    sensor_id,
+                    num_records,
+                    record_interval,
+                    start_date,
+                    base_dir,
                 )
+            )
 
-            for _ in as_completed(futures):
-                pbar.update(1)
+        for _ in as_completed(futures):
+            pass
     logging.info("Done")
 
 
