@@ -1,6 +1,6 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from config import LoggingConfig
+from .config import LoggingConfig
 import pathlib
 
 

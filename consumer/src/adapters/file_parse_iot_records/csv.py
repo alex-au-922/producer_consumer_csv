@@ -8,6 +8,7 @@ from ...entities import IOTRecord
 from ...usecases import FileParseIOTRecordsClient
 import csv
 import logging
+from pathlib import Path
 
 
 class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
@@ -22,29 +23,40 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
         self._file_extension = file_extension
 
     @overload
-    def parse(self, filename: str) -> list[IOTRecord]:
+    def parse(self, filename: str) -> Optional[list[IOTRecord]]:
         ...
 
     @overload
-    def parse(self, filename: Sequence[str]) -> list[list[IOTRecord]]:
+    def parse(self, filename: Sequence[str]) -> list[Optional[list[IOTRecord]]]:
         ...
 
     @override
     def parse(
         self, filename: str | Sequence[str]
-    ) -> list[IOTRecord] | list[list[IOTRecord]]:
+    ) -> Optional[list[IOTRecord]] | list[Optional[list[IOTRecord]]]:
         if isinstance(filename, str):
             return self._parse_single(filename)
         return self._parse_batch(filename)
 
+    def _basic_file_check(self, filename: str) -> bool:
+        if not Path(filename).exists():
+            raise ValueError("File path must exist!")
+        if not Path(filename).is_file():
+            raise ValueError("File path must be a file!")
+        if not filename.endswith(self._file_extension):
+            raise ValueError(f"File extension must be {self._file_extension}")
+
     @override
     def parse_stream(self, filename: str) -> Iterator[IOTRecord]:
         try:
-            if not filename.endswith(self._file_extension):
-                raise ValueError(f"File extension must be {self._file_extension}")
+            self._basic_file_check(filename)
             with open(filename) as csvfile:
                 reader = csv.reader(csvfile, delimiter=self._delimiter, strict=True)
                 yield from self._parse_iter(reader)
+        except OSError as e:
+            logging.exception(e)
+            logging.error(f"Failed to read stream from {filename}!")
+            raise e
         except Exception as e:
             logging.error(f"Failed to parse {filename}")
             logging.exception(e)
@@ -84,17 +96,16 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
             )
         return iot_records
 
-    def _parse_single(self, filename: str) -> list[IOTRecord]:
+    def _parse_single(self, filename: str) -> Optional[list[IOTRecord]]:
         try:
-            if not filename.endswith(self._file_extension):
-                raise ValueError(f"File extension must be {self._file_extension}")
+            self._basic_file_check(filename)
             with open(filename) as csvfile:
                 reader = csv.reader(csvfile, delimiter=self._delimiter)
                 return list(self._parse_iter(reader))
         except Exception as e:
-            logging.error(f"Failed to parse {filename}")
             logging.exception(e)
-            return []
+            logging.error(f"Failed to parse {filename}")
+            return None
 
     def _parse_batch(self, filenames: Sequence[str]) -> list[list[IOTRecord]]:
         with ThreadPoolExecutor() as executor:

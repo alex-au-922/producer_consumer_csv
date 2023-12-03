@@ -1,13 +1,14 @@
-from src.adapters.fetch_filenames.rabbitmq import RabbitMQFetchFilenamesClient
+from src.adapters.fetch_filenames_stream.rabbitmq import (
+    RabbitMQFetchFilenameStreamClient,
+)
 from src.deployments.script.config import RabbitMQConfig
 import pika
 import pytest
-from pytest import MonkeyPatch
 
 
 @pytest.fixture(scope="function")
-def rabbitmq_fetch_filenames_client() -> RabbitMQConfig:
-    return RabbitMQFetchFilenamesClient(
+def rabbitmq_fetch_filenames_stream_client() -> RabbitMQConfig:
+    return RabbitMQFetchFilenameStreamClient(
         host=RabbitMQConfig.HOST,
         port=RabbitMQConfig.PORT,
         credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
@@ -17,8 +18,8 @@ def rabbitmq_fetch_filenames_client() -> RabbitMQConfig:
 
 
 @pytest.fixture(scope="function")
-def rabbitmq_fetch_filenames_no_wait_client() -> RabbitMQConfig:
-    return RabbitMQFetchFilenamesClient(
+def rabbitmq_fetch_filenames_stream_no_wait_client() -> RabbitMQConfig:
+    return RabbitMQFetchFilenameStreamClient(
         host=RabbitMQConfig.HOST,
         port=RabbitMQConfig.PORT,
         credentials_service=lambda: (RabbitMQConfig.USERNAME, RabbitMQConfig.PASSWORD),
@@ -48,7 +49,9 @@ def setup_teardown_rabbitmq_queue(
     pika_conn, queue = raw_rabbitmq_pika_conn_config
 
     channel = pika_conn.channel()
+    channel.queue_delete(queue=queue)
     channel.queue_declare(queue=queue, durable=True)
     channel.queue_purge(queue=queue)
     yield
     channel.queue_purge(queue=queue)
+    channel.queue_delete(queue=queue)

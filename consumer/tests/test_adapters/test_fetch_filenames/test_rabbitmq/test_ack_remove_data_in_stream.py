@@ -4,12 +4,11 @@ from src.adapters.fetch_filenames_stream.rabbitmq import (
     RabbitMQFetchFilenameStreamClient,
 )
 import pika
-import pytest
 
 
 @pytest.mark.smoke
 @pytest.mark.parametrize("filename", random_csv_filenames())
-def test_fetch_single_success(
+def test_fetch_single_ack_remove_data_in_stream(
     rabbitmq_fetch_filenames_stream_no_wait_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
@@ -32,7 +31,12 @@ def test_fetch_single_success(
         receipt,
     ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
         assert fetched_filename == filename
-        assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
+
+    assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
+
+    method_frame, _, body = channel.basic_get(queue=queue)
+    assert method_frame is None
+    assert body is None
 
 
 @pytest.mark.smoke
@@ -40,7 +44,7 @@ def test_fetch_single_success(
     "filenames",
     [random_csv_filenames() for _ in range(5)],
 )
-def test_fetch_batch_success(
+def test_fetch_batch_ack_remove_data_in_stream(
     rabbitmq_fetch_filenames_stream_no_wait_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filenames: list[str],
@@ -60,11 +64,17 @@ def test_fetch_batch_success(
         )
 
     all_filenames = []
+    all_receipts = []
     for (
         filename,
         receipt,
     ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
         all_filenames.append(filename)
-        assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
+
+    assert all(rabbitmq_fetch_filenames_stream_no_wait_client.ack(all_receipts))
 
     assert sorted(all_filenames) == sorted(filenames)
+
+    method_frame, _, body = channel.basic_get(queue=queue)
+    assert method_frame is None
+    assert body is None

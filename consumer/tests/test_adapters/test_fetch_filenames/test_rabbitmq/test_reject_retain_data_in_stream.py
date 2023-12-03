@@ -9,7 +9,7 @@ import pytest
 
 @pytest.mark.smoke
 @pytest.mark.parametrize("filename", random_csv_filenames())
-def test_fetch_single_success(
+def test_fetch_single_reject_retain_data_in_stream(
     rabbitmq_fetch_filenames_stream_no_wait_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
@@ -32,6 +32,14 @@ def test_fetch_single_success(
         receipt,
     ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
         assert fetched_filename == filename
+
+    assert rabbitmq_fetch_filenames_stream_no_wait_client.reject(receipt)
+
+    for (
+        fetched_filename,
+        receipt,
+    ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
+        assert fetched_filename == filename
         assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
 
 
@@ -40,7 +48,7 @@ def test_fetch_single_success(
     "filenames",
     [random_csv_filenames() for _ in range(5)],
 )
-def test_fetch_batch_success(
+def test_fetch_batch_reject_retain_data_in_stream(
     rabbitmq_fetch_filenames_stream_no_wait_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filenames: list[str],
@@ -60,11 +68,27 @@ def test_fetch_batch_success(
         )
 
     all_filenames = []
+    all_receipts = []
     for (
         filename,
         receipt,
     ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
         all_filenames.append(filename)
-        assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
+        all_receipts.append(receipt)
 
     assert sorted(all_filenames) == sorted(filenames)
+
+    assert all(rabbitmq_fetch_filenames_stream_no_wait_client.reject(all_receipts))
+
+    new_all_filenames = []
+    new_all_receipts = []
+    for (
+        filename,
+        receipt,
+    ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
+        new_all_filenames.append(filename)
+        new_all_receipts.append(receipt)
+
+    assert sorted(new_all_filenames) == sorted(all_filenames)
+
+    assert all(rabbitmq_fetch_filenames_stream_no_wait_client.ack(new_all_receipts))

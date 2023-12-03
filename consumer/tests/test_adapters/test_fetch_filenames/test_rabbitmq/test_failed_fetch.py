@@ -1,6 +1,8 @@
 import pytest
 from .utils import random_csv_filenames
-from src.adapters.fetch_filenames.rabbitmq import RabbitMQFetchFilenamesClient
+from src.adapters.fetch_filenames_stream.rabbitmq import (
+    RabbitMQFetchFilenameStreamClient,
+)
 import pika
 import pytest
 from pytest import LogCaptureFixture, MonkeyPatch
@@ -9,7 +11,7 @@ from pytest import LogCaptureFixture, MonkeyPatch
 @pytest.mark.smoke
 @pytest.mark.parametrize("filename", random_csv_filenames())
 def test_fetch_single_exception_resilience(
-    rabbitmq_fetch_filenames_no_wait_client: RabbitMQFetchFilenamesClient,
+    rabbitmq_fetch_filenames_stream_no_wait_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
     monkeypatch: MonkeyPatch,
@@ -39,8 +41,12 @@ def test_fetch_single_exception_resilience(
 
     monkeypatch.setattr(pika.channel.Channel, "basic_get", mock_failed_fetch)
     with caplog.at_level("ERROR"):
-        for fetched_filename in rabbitmq_fetch_filenames_no_wait_client.fetch():
+        for (
+            fetched_filename,
+            receipt,
+        ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
             assert fetched_filename == filename
+            assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
             assert "Failed to fetch!" in caplog.text
 
 
@@ -50,7 +56,7 @@ def test_fetch_single_exception_resilience(
     [random_csv_filenames() for _ in range(5)],
 )
 def test_fetch_batch_exception_resilience(
-    rabbitmq_fetch_filenames_no_wait_client: RabbitMQFetchFilenamesClient,
+    rabbitmq_fetch_filenames_stream_no_wait_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filenames: list[str],
     monkeypatch: MonkeyPatch,
@@ -67,7 +73,7 @@ def test_fetch_batch_exception_resilience(
     for filename in filenames:
         channel.basic_publish(
             exchange="",
-            routing_key=rabbitmq_fetch_filenames_no_wait_client._queue,
+            routing_key=rabbitmq_fetch_filenames_stream_no_wait_client._queue,
             body=filename,
             properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent),
         )
@@ -91,8 +97,12 @@ def test_fetch_batch_exception_resilience(
     all_filenames = []
 
     with caplog.at_level("ERROR"):
-        for fetched_filename in rabbitmq_fetch_filenames_no_wait_client.fetch():
+        for (
+            fetched_filename,
+            receipt,
+        ) in rabbitmq_fetch_filenames_stream_no_wait_client.fetch_stream():
             all_filenames.append(fetched_filename)
+            assert rabbitmq_fetch_filenames_stream_no_wait_client.ack(receipt)
             assert "Failed to fetch!" in caplog.text
 
     assert sorted(all_filenames) == sorted(filenames)
@@ -100,16 +110,16 @@ def test_fetch_batch_exception_resilience(
 
 @pytest.mark.parametrize("filename", random_csv_filenames())
 def test_fetch_single_ack_exception_resilience(
-    rabbitmq_fetch_filenames_client: RabbitMQFetchFilenamesClient,
+    rabbitmq_fetch_filenames_stream_client: RabbitMQFetchFilenameStreamClient,
     raw_rabbitmq_pika_conn_config: tuple[pika.BaseConnection, str],
     filename: str,
     monkeypatch: MonkeyPatch,
 ):
-    new_rabbitmq_fetch_filenames_client = RabbitMQFetchFilenamesClient(
-        host=rabbitmq_fetch_filenames_client._host,
-        port=rabbitmq_fetch_filenames_client._port,
-        credentials_service=rabbitmq_fetch_filenames_client._credentials_service,
-        queue=rabbitmq_fetch_filenames_client._queue,
+    new_rabbitmq_fetch_filenames_stream_client = RabbitMQFetchFilenameStreamClient(
+        host=rabbitmq_fetch_filenames_stream_client._host,
+        port=rabbitmq_fetch_filenames_stream_client._port,
+        credentials_service=rabbitmq_fetch_filenames_stream_client._credentials_service,
+        queue=rabbitmq_fetch_filenames_stream_client._queue,
         polling_timeout=1,
     )
 
@@ -123,7 +133,7 @@ def test_fetch_single_ack_exception_resilience(
 
     channel.basic_publish(
         exchange="",
-        routing_key=rabbitmq_fetch_filenames_client._queue,
+        routing_key=rabbitmq_fetch_filenames_stream_client._queue,
         body=filename,
         properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent),
     )
@@ -144,5 +154,10 @@ def test_fetch_single_ack_exception_resilience(
 
     monkeypatch.setattr(pika.channel.Channel, "basic_ack", mock_failed_ack)
 
-    for fetched_filename in new_rabbitmq_fetch_filenames_client.fetch():
+    for (
+        fetched_filename,
+        receipt,
+    ) in new_rabbitmq_fetch_filenames_stream_client.fetch_stream():
+        monkeypatch.undo()
         assert fetched_filename == filename
+        assert new_rabbitmq_fetch_filenames_stream_client.ack(receipt)

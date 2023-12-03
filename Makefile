@@ -45,7 +45,7 @@ test_consumer:
 	export QUEUE_NAME=$(QUEUE_NAME) && \
 	export CSV_PARSER_RECOGNIZED_DATETIME_FORMATS=$(CSV_PARSER_RECOGNIZED_DATETIME_FORMATS) && \
 	export CSV_PARSER_DELIMITER=$(CSV_PARSER_DELIMITER) && \
-	COVERAGE_FILE=.coverage_consumer coverage run -m pytest -vxs consumer/tests
+	COVERAGE_FILE=.coverage_consumer coverage run -m pytest -vx --last-failed consumer/tests
 coverage_report:
 	coverage combine .coverage_producer .coverage_consumer && \
 	coverage report -m --omit="*/tests/*"
