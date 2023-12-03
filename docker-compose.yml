@@ -56,11 +56,15 @@ services:
       LOG_DIR: ${PRODUCER_LOG_DIR}
       LOG_RETENTION: ${PRODUCER_LOG_RETENTION}
       LOG_ROTATION: ${PRODUCER_LOG_ROTATION}
-      RABBITMQ_HOST: records_rabbitmq
+      RABBITMQ_HOST: localhost
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_QUEUE_NAME: ${RABBITMQ_QUEUE_NAME}
+    network_mode: host
+    volumes:
+      - ./${TARGET_FILE_DIR}:/home/app/${TARGET_FILE_DIR}:ro
+      # - ./${PRODUCER_LOG_DIR}:/home/app/${PRODUCER_LOG_DIR}
     depends_on:
       records_postgres:
         condition: service_healthy
@@ -81,12 +85,13 @@ services:
       LOG_DIR: ${CONSUMER_LOG_DIR}
       LOG_RETENTION: ${CONSUMER_LOG_RETENTION}
       LOG_ROTATION: ${CONSUMER_LOG_ROTATION}
-      RABBITMQ_HOST: records_rabbitmq
+      RABBITMQ_HOST: localhost
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_QUEUE_NAME: ${RABBITMQ_QUEUE_NAME}
-      POSTGRES_HOST: records_postgres
+      RABBITMQ_POLLING_TIMEOUT: ${RABBITMQ_POLLING_TIMEOUT}
+      POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
       POSTGRES_USERNAME: ${POSTGRES_USERNAME}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -95,6 +100,10 @@ services:
       CSV_PARSER_RECOGNIZED_DATETIME_FORMATS: ${CSV_PARSER_RECOGNIZED_DATETIME_FORMATS}
       CSV_PARSER_DELIMITER: ${CSV_PARSER_DELIMITER}
       CSV_PARSER_FILE_EXTENSION: ${CSV_PARSER_FILE_EXTENSION}
+    network_mode: host
+    volumes:
+      - ./${TARGET_FILE_DIR}:/home/app/${TARGET_FILE_DIR}:ro
+    #   - ./${CONSUMER_LOG_DIR}:/home/app/src/${CONSUMER_LOG_DIR}
     deploy:
       mode: replicated
       replicas: ${CONSUMER_REPLICAS}

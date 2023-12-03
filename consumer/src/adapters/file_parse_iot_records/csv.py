@@ -52,6 +52,7 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
             self._basic_file_check(filename)
             with open(filename) as csvfile:
                 reader = csv.reader(csvfile, delimiter=self._delimiter, strict=True)
+                next(reader)  # skip header
                 yield from self._parse_iter(reader)
         except OSError as e:
             logging.exception(e)

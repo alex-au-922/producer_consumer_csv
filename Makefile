@@ -7,9 +7,9 @@ build:
 	docker compose pull --ignore-buildable
 	docker compose build
 up:
-	docker compose up
-up_d:
-	docker compose up -d
+	docker compose up -d --wait && docker compose logs -f --tail 100 records_producer records_consumer
+logs:
+	docker compose logs -f --tail 100 records_producer records_consumer
 down:
 	docker compose down
 stats:

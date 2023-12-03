@@ -28,6 +28,8 @@ RUN yum install -y \
 RUN adduser app
 WORKDIR /home/app
 
+COPY src ./src/
+
 RUN chown -R app:app /home/app
 
 USER app
@@ -36,5 +38,4 @@ WORKDIR ${HOME}
 
 COPY --from=build /home/app/.local /home/app/.local
 
-COPY src ./src/
 CMD python3.11 -m src.deployments.script.main

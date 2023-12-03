@@ -27,7 +27,10 @@ def main() -> None:
 
     successes_map = {}
     try:
+        logging.info("Publishing filenames...")
+
         for filename in traverse_files():
+            logging.info(f"Publishing {filename}...")
             successes_map[filename] = publish_filenames_client.publish(filename)
 
         failed_filenames = [
@@ -40,6 +43,7 @@ def main() -> None:
         logging.exception(e)
         raise e
     finally:
+        logging.info("Closing publish filenames client...")
         publish_filenames_client.close()
 
 

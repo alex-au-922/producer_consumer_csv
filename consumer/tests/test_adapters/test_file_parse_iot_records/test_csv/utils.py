@@ -80,7 +80,7 @@ def random_invalid_value_rows() -> list[tuple[str, ...]]:
 def random_invalid_datetime_and_value_rows() -> list[tuple[str, ...]]:
     rows = []
     all_datetime_formats = [
-        "%Y-%m-%dT%H:%M:%S%z",
+        "%Y-%m-%dT%H:%M:%S.%f%z",
         "%Y-%m-%dT%H:%M%z",
         "%Y-%m-%d %H:%M:%S%z",
         "%Y-%m-%d %H:%M%z",
@@ -110,7 +110,10 @@ def random_csv_file(base_dir: Path, rows: list[tuple[str, ...]]) -> str:
     filename = "".join(random.choices(string.ascii_letters, k=10)) + ".csv"
     filepath = base_dir.joinpath(filename)
     with open(filepath, "w") as csvfile:
-        writer = csv.writer(csvfile, delimiter=",")
+        writer = csv.DictWriter(
+            csvfile, delimiter=",", fieldnames=["record_time", "sensor_id", "value"]
+        )
+        writer.writeheader()
         writer.writerows(rows)
     return str(filepath)
 
@@ -119,7 +122,10 @@ def random_tsv_file(base_dir: Path, rows: list[tuple[str, ...]]) -> str:
     filename = "".join(random.choices(string.ascii_letters, k=10)) + ".tsv"
     filepath = base_dir.joinpath(filename)
     with open(filepath, "w") as csvfile:
-        writer = csv.writer(csvfile, delimiter="\t")
+        writer = csv.DictWriter(
+            csvfile, delimiter="\t", fieldnames=["record_time", "sensor_id", "value"]
+        )
+        writer.writeheader()
         writer.writerows(rows)
     return str(filepath)
 
