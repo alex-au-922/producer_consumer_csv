@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from decimal import Decimal
+from decimal import InvalidOperation
 from typing import Iterator, Optional, overload, Sequence
 from typing_extensions import override
 from ...entities import IOTRecord
@@ -14,9 +15,11 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
         self,
         recognized_datetime_formats: Sequence[str],
         delimiter: str = ",",
+        file_extension: str = ".csv",
     ) -> None:
         self._delimiter = delimiter
         self._recognized_datetime_formats = recognized_datetime_formats
+        self._file_extension = file_extension
 
     @overload
     def parse(self, filename: str) -> list[IOTRecord]:
@@ -37,10 +40,13 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
     @override
     def parse_stream(self, filename: str) -> Iterator[IOTRecord]:
         try:
+            if not filename.endswith(self._file_extension):
+                raise ValueError(f"File extension must be {self._file_extension}")
             with open(filename) as csvfile:
-                reader = csv.reader(csvfile, delimiter=self._delimiter)
+                reader = csv.reader(csvfile, delimiter=self._delimiter, strict=True)
                 yield from self._parse_iter(reader)
         except Exception as e:
+            logging.error(f"Failed to parse {filename}")
             logging.exception(e)
 
     def _parse_datetime(self, datetime_str: str) -> Optional[datetime]:
@@ -54,36 +60,39 @@ class CSVParseIOTRecordsClient(FileParseIOTRecordsClient):
     def _parse_value(self, value_str: str) -> Optional[Decimal]:
         try:
             return Decimal(value_str)
-        except ValueError:
+        except InvalidOperation:
             return None
 
     def _parse_iter(self, reader: Iterator[list[str]]) -> Iterator[IOTRecord]:
         iot_records: list[IOTRecord] = []
         for row in reader:
-            try:
-                parsed_datetime = self._parse_datetime(row[0])
-                if parsed_datetime is None:
-                    raise ValueError(f"Unrecognized datetime format: {row[0]}")
+            parsed_datetime = self._parse_datetime(row[0])
+            if parsed_datetime is None:
+                logging.warning(f"Unrecognized datetime format: {row[0]}")
 
-                parsed_value = self._parse_value(row[2])
-                if parsed_value is None:
-                    raise ValueError(f"Unrecognized value format: {row[2]}")
+            parsed_value = self._parse_value(row[2])
+            if parsed_value is None:
+                logging.warning(f"Unrecognized value format: {row[2]}")
 
-                yield IOTRecord(
-                    datetime=parsed_datetime,
-                    sensor_id=str(row[1]),
-                    value=parsed_value,
-                )
-            except Exception as e:
-                logging.exception(e)
+            if parsed_datetime is None or parsed_value is None:
+                continue
+
+            yield IOTRecord(
+                record_time=parsed_datetime,
+                sensor_id=str(row[1]),
+                value=parsed_value,
+            )
         return iot_records
 
     def _parse_single(self, filename: str) -> list[IOTRecord]:
         try:
+            if not filename.endswith(self._file_extension):
+                raise ValueError(f"File extension must be {self._file_extension}")
             with open(filename) as csvfile:
                 reader = csv.reader(csvfile, delimiter=self._delimiter)
                 return list(self._parse_iter(reader))
         except Exception as e:
+            logging.error(f"Failed to parse {filename}")
             logging.exception(e)
             return []
 

@@ -4,7 +4,7 @@ from typing import overload, Sequence
 
 class PublishFilenamesClient(ABC):
     @overload
-    def publish(self, filename: str) -> bool:  # type: ignore[overload-overlap]
+    def publish(self, filename: str) -> bool:
         pass
 
     @overload

@@ -43,6 +43,8 @@ test_consumer:
 	export RABBITMQ_USERNAME=$(RABBITMQ_USERNAME) && \
 	export RABBITMQ_PASSWORD=$(RABBITMQ_PASSWORD) && \
 	export QUEUE_NAME=$(QUEUE_NAME) && \
+	export CSV_PARSER_RECOGNIZED_DATETIME_FORMATS=$(CSV_PARSER_RECOGNIZED_DATETIME_FORMATS) && \
+	export CSV_PARSER_DELIMITER=$(CSV_PARSER_DELIMITER) && \
 	COVERAGE_FILE=.coverage_consumer coverage run -m pytest -vxs consumer/tests
 coverage_report:
 	coverage combine .coverage_producer .coverage_consumer && \

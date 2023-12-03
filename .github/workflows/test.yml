@@ -7,6 +7,8 @@ jobs:
   load-dotenv:
     runs-on: ubuntu-latest
     outputs:
+      target-file-dir: ${{ steps.load-dotenv.outputs.TARGET_FILE_DIR }}
+      target-file-extension: ${{ steps.load-dotenv.outputs.TARGET_FILE_EXTENSION }}
       postgres-version-tag: ${{ steps.load-dotenv.outputs.POSTGRES_VERSION_TAG }}
       postgres-port: ${{ steps.load-dotenv.outputs.POSTGRES_PORT }}
       postgres-username: ${{ steps.load-dotenv.outputs.POSTGRES_USERNAME }}
@@ -16,7 +18,10 @@ jobs:
       rabbitmq-port: ${{ steps.load-dotenv.outputs.RABBITMQ_PORT }}
       rabbitmq-username: ${{ steps.load-dotenv.outputs.RABBITMQ_USERNAME }}
       rabbitmq-password: ${{ steps.load-dotenv.outputs.RABBITMQ_PASSWORD }}
-      queue-name: ${{ steps.load-dotenv.outputs.QUEUE_NAME }}
+      rabbitmq-queue-name: ${{ steps.load-dotenv.outputs.RABBITMQ_QUEUE_NAME }}
+      csv-parser-recognized-datetime-formats: ${{ steps.load-dotenv.outputs.CSV_PARSER_RECOGNIZED_DATETIME_FORMATS }}
+      csv-parser-delimiter: ${{ steps.load-dotenv.outputs.CSV_PARSER_DELIMITER }}
+      csv-parser-file-extension: ${{ steps.load-dotenv.outputs.CSV_PARSER_FILE_EXTENSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +31,8 @@ jobs:
           set -o allexport
           source .env
           set +o allexport
+          echo "TARGET_FILE_DIR=$TARGET_FILE_DIR" >> $GITHUB_OUTPUT
+          echo "TARGET_FILE_EXTENSION=$TARGET_FILE_EXTENSION" >> $GITHUB_OUTPUT
           echo "POSTGRES_VERSION_TAG=$POSTGRES_VERSION_TAG" >> $GITHUB_OUTPUT
           echo "POSTGRES_PORT=$POSTGRES_PORT" >> $GITHUB_OUTPUT
           echo "POSTGRES_USERNAME=$POSTGRES_USERNAME" >> $GITHUB_OUTPUT
@@ -35,7 +42,10 @@ jobs:
           echo "RABBITMQ_PORT=$RABBITMQ_PORT" >> $GITHUB_OUTPUT
           echo "RABBITMQ_USERNAME=$RABBITMQ_USERNAME" >> $GITHUB_OUTPUT
           echo "RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD" >> $GITHUB_OUTPUT
-          echo "QUEUE_NAME=$QUEUE_NAME" >> $GITHUB_OUTPUT
+          echo "RABBITMQ_QUEUE_NAME=$RABBITMQ_QUEUE_NAME" >> $GITHUB_OUTPUT
+          echo "CSV_PARSER_RECOGNIZED_DATETIME_FORMATS=$CSV_PARSER_RECOGNIZED_DATETIME_FORMATS" >> $GITHUB_OUTPUT
+          echo "CSV_PARSER_DELIMITER=$CSV_PARSER_DELIMITER" >> $GITHUB_OUTPUT
+          echo "CSV_PARSER_FILE_EXTENSION=$CSV_PARSER_FILE_EXTENSION" >> $GITHUB_OUTPUT
   test-producer:
     needs: load-dotenv
     runs-on: ubuntu-latest
@@ -90,7 +100,9 @@ jobs:
           RABBITMQ_PORT: ${{ needs.load-dotenv.outputs.rabbitmq-port }}
           RABBITMQ_USERNAME: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
-          QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
+          RABBITMQ_QUEUE_NAME: ${{ needs.load-dotenv.outputs.rabbitmq-queue-name }}
+          TARGET_FILE_DIR: ${{ needs.load-dotenv.outputs.target-file-dir }}
+          TARGET_FILE_EXTENSION: ${{ needs.load-dotenv.outputs.target-file-extension }}
       - name: Output coverage file
         id: output-coverage-file
         run: |
@@ -168,7 +180,10 @@ jobs:
           RABBITMQ_PORT: ${{ needs.load-dotenv.outputs.rabbitmq-port }}
           RABBITMQ_USERNAME: ${{ needs.load-dotenv.outputs.rabbitmq-username }}
           RABBITMQ_PASSWORD: ${{ needs.load-dotenv.outputs.rabbitmq-password }}
-          QUEUE_NAME: ${{ needs.load-dotenv.outputs.queue-name }}
+          RABBITMQ_QUEUE_NAME: ${{ needs.load-dotenv.outputs.rabbitmq-queue-name }}
+          CSV_PARSER_RECOGNIZED_DATETIME_FORMATS: ${{ needs.load-dotenv.outputs.csv-parser-recognized-datetime-formats }}
+          CSV_PARSER_DELIMITER: ${{ needs.load-dotenv.outputs.csv-parser-delimiter }}
+          CSV_PARSER_FILE_EXTENSION: ${{ needs.load-dotenv.outputs.csv-parser-file-extension }}
       - name: Output coverage file
         id: output-coverage-file
         run: |

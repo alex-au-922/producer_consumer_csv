@@ -62,7 +62,6 @@ class RabbitMQFetchFilenamesClient(FetchFilenameClient):
                     method, properties, body = channel.basic_get(
                         queue=self._queue, auto_ack=False
                     )
-
                     if method is None and properties is None and body is None:
                         if self._last_poll_time is None:
                             self._last_poll_time = datetime.now()

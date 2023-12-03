@@ -17,7 +17,7 @@ class RabbitMQConfig:
     PORT = int(os.getenv("RABBITMQ_PORT", 5672))
     USERNAME = os.getenv("RABBITMQ_USERNAME", "guest")
     PASSWORD = os.getenv("RABBITMQ_PASSWORD", "guest")
-    QUEUE = os.getenv("RABBITMQ_QUEUE", "filenames")
+    QUEUE = os.getenv("RABBITMQ_QUEUE_NAME", "filenames")
     POLLING_TIMEOUT = int(os.getenv("RABBITMQ_POLLING_TIMEOUT", 10))
 
 
@@ -35,3 +35,4 @@ class CSVParserConfig:
         "CSV_PARSER_RECOGNIZED_DATETIME_FORMATS", ""
     ).split(",")
     DELIMITER = os.getenv("CSV_PARSER_DELIMITER", ",")
+    FILE_EXTENSION = os.getenv("CSV_PARSER_FILE_EXTENSION", ".csv")

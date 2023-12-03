@@ -20,6 +20,7 @@ fetch_filenames_client = RabbitMQFetchFilenamesClient(
 file_parse_iot_records_client = CSVParseIOTRecordsClient(
     recognized_datetime_formats=CSVParserConfig.RECOGNIZED_DATETIME_FORMATS,
     delimiter=CSVParserConfig.DELIMITER,
+    file_extension=CSVParserConfig.FILE_EXTENSION,
 )
 
 upsert_iot_records_client = PostgresUpsertIOTRecordsClient(
