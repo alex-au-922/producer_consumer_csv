@@ -7,6 +7,7 @@
 
 * [Producer Consumer CSV](#producer-consumer-csv)
    * [Description](#description)
+   * [Todos](#todos)
    * [Architecture](#architecture)
       * [Requirements](#requirements)
       * [Database Schema](#database-schema)
@@ -24,6 +25,15 @@
 
 ## Description
 This is a simple producer consumer application that reads a csv file and writes the data to a database. The application is written in Python.
+
+## Todos
+- [x] Add CI pipeline
+- [x] Add unit tests
+- [x] Add code coverage report
+- [x] Add end to end test
+- [x] Add documentation
+- [ ] Stablize the RabbitMQ connection
+- [ ] Different indexing strategy for performance
 
 ## Architecture
 The application is composed of the following components:
