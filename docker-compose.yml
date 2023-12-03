@@ -1,0 +1,119 @@
+version: '3.8'
+services:
+  records_postgres:
+    image: records_postgres:${POSTGRES_VERSION_TAG}
+    container_name: records_postgres
+    build:
+      context: database
+      dockerfile: dockerfile
+      args:
+        POSTGRES_VERSION_TAG: ${POSTGRES_VERSION_TAG}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      TZ: ${TZ}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - ${POSTGRES_VOLUME_DIR}:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USERNAME}
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  records_rabbitmq:
+    image: rabbitmq:${RABBITMQ_VERSION_TAG}
+    container_name: records_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - ${RABBITMQ_WEBAPP_PORT}:15672
+      - ${RABBITMQ_PORT}:5672
+    volumes:
+      - ${RABBITMQ_VOLUME_DIR}:/var/lib/rabbitmq
+    restart: always
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  records_producer:
+    image: records_producer:latest
+    container_name: records_producer
+    build:
+      context: producer
+      dockerfile: dockerfile
+      args:
+        AMAZON_LINUX_VERSION_TAG: ${AMAZON_LINUX_VERSION_TAG}
+    environment:
+      TARGET_FILE_DIR: ${TARGET_FILE_DIR}
+      TARGET_FILE_EXTENSION: ${TARGET_FILE_EXTENSION}
+      LOG_LEVEL: ${PRODUCER_LOG_LEVEL}
+      LOG_FORMAT: ${PRODUCER_LOG_FORMAT}
+      LOG_DATE_FORMAT: ${PRODUCER_LOG_DATE_FORMAT}
+      LOG_DIR: ${PRODUCER_LOG_DIR}
+      LOG_RETENTION: ${PRODUCER_LOG_RETENTION}
+      LOG_ROTATION: ${PRODUCER_LOG_ROTATION}
+      RABBITMQ_HOST: records_rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_QUEUE_NAME: ${RABBITMQ_QUEUE_NAME}
+      RABBITMQ_SOCKET_TIMEOUT: ${RABBITMQ_SOCKET_TIMEOUT}
+      TZ: ${TZ}
+    volumes:
+      - ${TARGET_FILE_DIR}:/app/${TARGET_FILE_DIR}:ro
+      - ${PRODUCER_LOG_DIR}:/app/${PRODUCER_LOG_DIR}
+    depends_on:
+      records_postgres:
+        condition: service_healthy
+      records_rabbitmq:
+        condition: service_healthy
+
+  records_consumer:
+    image: records_consumer:latest
+    build:
+      context: consumer
+      dockerfile: dockerfile
+      args:
+        AMAZON_LINUX_VERSION_TAG: ${AMAZON_LINUX_VERSION_TAG}
+    environment:
+      LOG_LEVEL: ${CONSUMER_LOG_LEVEL}
+      LOG_FORMAT: ${CONSUMER_LOG_FORMAT}
+      LOG_DATE_FORMAT: ${CONSUMER_LOG_DATE_FORMAT}
+      LOG_DIR: ${CONSUMER_LOG_DIR}
+      LOG_RETENTION: ${CONSUMER_LOG_RETENTION}
+      LOG_ROTATION: ${CONSUMER_LOG_ROTATION}
+      RABBITMQ_HOST: records_rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_QUEUE_NAME: ${RABBITMQ_QUEUE_NAME}
+      RABBITMQ_POLLING_TIMEOUT: ${RABBITMQ_POLLING_TIMEOUT}
+      RABBITMQ_SOCKET_TIMEOUT: ${RABBITMQ_SOCKET_TIMEOUT}
+      POSTGRES_HOST: records_postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE}
+      POSTGRES_BATCH_UPSERT_SIZE: ${POSTGRES_BATCH_UPSERT_SIZE}
+      CSV_PARSER_DELIMITER: ${CSV_PARSER_DELIMITER}
+      CSV_PARSER_FILE_EXTENSION: ${CSV_PARSER_FILE_EXTENSION}
+      TZ: ${TZ}
+    volumes:
+      - ${TARGET_FILE_DIR}:/app/${TARGET_FILE_DIR}:ro
+      - ${CONSUMER_LOG_DIR}:/app/${CONSUMER_LOG_DIR}
+    deploy:
+      mode: replicated
+      replicas: ${CONSUMER_REPLICAS}
+    depends_on:
+      records_postgres:
+        condition: service_healthy
+      records_rabbitmq:
+        condition: service_healthy

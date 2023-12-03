@@ -1,0 +1,16 @@
+ARG AMAZON_LINUX_VERSION_TAG
+FROM amazonlinux:${AMAZON_LINUX_VERSION_TAG}
+RUN yum install -y \
+    python3.11 \
+    python3.11-devel \
+    python3.11-pip
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN python3.11 -m pip install -r requirements.txt
+
+COPY src ./src/
+
+CMD python3.11 -m src.deployments.script.main
