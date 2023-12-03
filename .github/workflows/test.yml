@@ -1,7 +1,7 @@
 name: Producer Consumer CI Test
 on:
   push:
-    branches: ["dev"]
+    branches: ["main", "dev"]
   workflow_dispatch:
 jobs:
   load-dotenv:

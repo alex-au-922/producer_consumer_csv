@@ -3,8 +3,37 @@
 ![Build Status](https://github.com/github/docs/actions/workflows/test.yml/badge.svg)
 ![Code Coverage](./coverage.svg)
 
+## Table of contents
+
+* [Producer Consumer CSV](#producer-consumer-csv)
+   * [Description](#description)
+   * [Todos](#todos)
+   * [Architecture](#architecture)
+      * [Requirements](#requirements)
+      * [Database Schema](#database-schema)
+         * [records](#records)
+      * [Database Indexes](#database-indexes)
+      * [Queue](#queue)
+   * [Test Data](#test-data)
+   * [Installation](#installation)
+   * [Usage](#usage)
+      * [Postgres in Docker](#postgres-in-docker)
+      * [Running the application](#running-the-application)
+      * [End to end test](#end-to-end-test)
+   * [Unit tests](#unit-tests)
+      * [Code coverage report](#code-coverage-report)
+
 ## Description
 This is a simple producer consumer application that reads a csv file and writes the data to a database. The application is written in Python.
+
+## Todos
+- [x] Add CI pipeline
+- [x] Add unit tests
+- [x] Add code coverage report
+- [x] Add end to end test
+- [x] Add documentation
+- [ ] Stablize the RabbitMQ connection
+- [ ] Different indexing strategy for performance
 
 ## Architecture
 The application is composed of the following components:
@@ -213,3 +242,6 @@ $ make test
 ```
 
 The unit test will run the both the producer and consumer unit tests. The coverage report will be generated in the `.coverage` file.
+
+### Code coverage report
+You can generate the code coverage report by visiting the following link: https://alex-au-922.github.io/producer_consumer_csv/
